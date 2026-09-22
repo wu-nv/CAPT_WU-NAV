@@ -1,6 +1,6 @@
-# ⚓️ 航海小程序 (CAPT_WU Navigation Center)
+# ⚓️ 航海小程序 (Navigation Mini Programs)
 
-欢迎来到 CAPT_WU 的航海工具导航页！本项目旨在提供一个简洁、高效的在线航海辅助工具集合，用于教学演示与日常航行参考。
+这是一个简洁、高效的在线航海工具集合，用于教学演示与日常航行参考。
 
 ## 🚀 在线访问
 点击下方链接直接访问导航主页：
@@ -28,4 +28,4 @@
 - **202X-XX-XX**: 项目初始化，上线航海图表查看器。
 
 ---
-*Created by CAPT_WU. Safe Navigation!* ⚓️
+*航海小程序 · Safe Navigation!* ⚓️
