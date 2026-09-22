@@ -1,4 +1,4 @@
-# ⚓️ CAPT_WU 航海教学中心 (CAPT_WU Navigation Center)
+# ⚓️ 航海小程序 (CAPT_WU Navigation Center)
 
 欢迎来到 CAPT_WU 的航海工具导航页！本项目旨在提供一个简洁、高效的在线航海辅助工具集合，用于教学演示与日常航行参考。
 
