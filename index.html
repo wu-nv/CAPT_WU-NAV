@@ -3,66 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAPT_WU 航海小程序</title>
+    <title>航海小程序</title>
     <style>
+        /* 全局页面样式 */
         body {
-            font-family: "Microsoft YaHei", sans-serif;
-            background-color: #f0f4f8; /* 浅蓝灰色背景 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            /* 柔和的深海渐变背景 */
+            background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
         }
-        .container {
-            text-align: center;
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+
+        /* 标题样式 */
         h1 {
-            color: #2c3e50;
-            margin-bottom: 30px;
+            color: #006064;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
+
+        /* 按钮容器 */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 300px;
+        }
+
+        /* 按钮基础样式 */
         .btn {
-            display: inline-block;
+            display: block;
+            text-align: center;
             padding: 15px 30px;
-            margin: 10px;
-            font-size: 18px;
-            color: white;
-            background-color: #007bff; /* 按钮蓝色 */
             text-decoration: none;
-            border-radius: 8px;
-            transition: background-color 0.3s;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 12px; /* 圆角 */
+            border: none;
+            cursor: pointer;
+            /* 初始阴影 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            /* 关键：添加过渡动画，让变化更平滑 */
+            transition: all 0.3s ease;
         }
+
+        /* 海图按钮颜色 */
+        .btn-primary {
+            background-color: #0288d1; /* 深海蓝 */
+        }
+
+        /* 索星卡按钮颜色 */
+        .btn-success {
+            background-color: #00897b; /* 航海绿 */
+        }
+
+        /* 鼠标悬停效果 (Hover) */
         .btn:hover {
-            background-color: #0056b3; /* 鼠标悬停变深蓝 */
+            transform: translateY(-3px); /* 鼠标放上去时按钮上浮3像素 */
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2); /* 阴影加深，产生立体感 */
         }
-        .btn-secondary {
-            background-color: #28a745; /* 第二个按钮用绿色 */
+
+        /* 海图按钮悬停变色 */
+        .btn-primary:hover {
+            background-color: #0277bd;
         }
-        .btn-secondary:hover {
-            background-color: #1e7e34;
+
+        /* 索星卡按钮悬停变色 */
+        .btn-success:hover {
+            background-color: #00796b;
+        }
+
+        /* 底部版权信息 */
+        .footer {
+            margin-top: 50px;
+            color: #555;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>⚓ 航海小程序</h1>
-        <p>请选择你要使用的工具：</p>
-        
-        <!-- 按钮 1：链接到原来的海图/图表 -->
-        <!-- 注意：如果你之前把 chart.html 改回了原名，这里要改成 chart.html -->
-        <a href="chart.html" class="btn">🌊 恒向线与大圆航线</a>
-        <br> <!-- 这是一个换行符，让两个按钮分开一点 -->
+    <h1>⚓️ 航海小程序</h1>
 
-<a href="star_simulator.html" class="btn btn-success">
-    ⭐ 索星卡模拟器
-</a>
-        <br>
+    <div class="button-container">
+        <!-- 按钮 1：海图 -->
+        <a href="chart.html" class="btn btn-primary">
+            🌊 查看航海图表
+        </a>
 
+        <!-- 按钮 2：索星卡 -->
+        <a href="star_simulator.html" class="btn btn-success">
+            ⭐ 索星卡模拟器
+        </a>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 CAPT_WU. All Rights Reserved.
     </div>
 
 </body>
