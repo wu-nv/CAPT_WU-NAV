@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>墨卡托海图 · 恒向线 vs 大圆航线</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #2b3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .chart-container {
+            background: #fff;
+            padding: 12px 12px 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 100%;
+            width: fit-content;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a3a5c;
+            margin-bottom: 6px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .info-panel {
+            width: 100%;
+            background: #f5f9ff;
+            border: 1px solid #b0c8dd;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            overflow-x: auto;
+        }
+        .info-panel table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+        .info-panel th, .info-panel td {
+            padding: 4px 6px;
+            text-align: center;
+            border: 1px solid #c8d8e8;
+            white-space: nowrap;
+        }
+        .info-panel th {
+            background: #dce6f0;
+            font-weight: 700;
+            color: #1a3a5c;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        .info-panel .row-label {
+            font-weight: 700;
+            font-family: Arial, sans-serif;
+            text-align: right;
+            padding-right: 10px;
+            background: #eef4fa;
+            font-size: 13px;
+        }
+        .info-panel .row-label.gcr-label { color: #b8860b; }
+        .info-panel .row-label.rlr-label { color: #cc0000; }
+        .info-panel .data-cell {
+            background: #fff;
+            min-width: 60px;
+        }
+        .info-panel .data-cell.arrived {
+            background: #c8e6c9;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .waypoint-settings {
+            width: 100%;
+            background: #f5f9ff;
+            border: 1px solid #b0c8dd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13px;
+        }
+        .waypoint-settings .wp-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+        }
+        .waypoint-settings .wp-label {
+            font-weight: 700;
+            min-width: 40px;
+        }
+        .waypoint-settings .wp-label.start-label { color: #e30000; }
+        .waypoint-settings .wp-label.end-label { color: #00aa00; }
+        .waypoint-settings .coord-group {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .waypoint-settings .coord-group input[type="number"] {
+            width: 50px;
+            padding: 2px 2px;
+            border: 1px solid #b0c8dd;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .waypoint-settings .coord-group input[type="number"]:focus {
+            outline: 2px solid #4c6a85;
+        }
+        .waypoint-settings .coord-group select {
+            padding: 2px 2px;
+            border: 1px solid #b0c8dd;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #fff;
+        }
+        .waypoint-settings .coord-group .deg-sym { font-weight: 700; }
+        .waypoint-settings .coord-group .min-sym { font-weight: 700; }
+
+        canvas {
+            display: block;
+            width: 19.6cm;
+            height: auto;
+            border: 2px solid #222;
+            background: #f0f8ff;
+            cursor: crosshair;
+        }
+
+        .control-panel {
+            width: 100%;
+            background: #f5f9ff;
+            border: 1px solid #b0c8dd;
+            border-radius: 6px;
+            padding: 6px 14px;
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+        }
+        .control-panel .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .control-panel button {
+            padding: 5px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #4c6a85;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        .control-panel button:hover { background: #2b3e50; }
+        .control-panel button.active { background: #4CAF50; }
+        .control-panel button.stop { background: #f44336; }
+        .control-panel button.stop:hover { background: #da190b; }
+        .control-panel button.reset { background: #ff8f00; }
+        .control-panel button.reset:hover { background: #e67e00; }
+        .control-panel .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            color: #1a3a5c;
+            font-size: 14px;
+        }
+        .control-panel .speed-control input[type="number"] {
+            width: 60px;
+            padding: 2px 4px;
+            border: 1px solid #b0c8dd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .control-panel .speed-control input[type="number"]:focus {
+            outline: 2px solid #4c6a85;
+        }
+        .control-panel .key-hint {
+            color: #555;
+            font-size: 12px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        @media print {
+            canvas { width: 19.6cm; height: auto; }
+            body { background: white; }
+            .chart-container { box-shadow: none; padding: 6px; }
+            .info-panel, .waypoint-settings, .control-panel { background: #f0f4f8; border-color: #999; }
+        }
+        @media (max-width: 600px) {
+            .info-panel table { font-size: 11px; }
+            .info-panel th, .info-panel td { padding: 2px 3px; }
+            .waypoint-settings .wp-row { flex-direction: column; align-items: stretch; gap: 4px; }
+            .waypoint-settings .coord-group { flex-wrap: wrap; }
+            .control-panel { flex-direction: column; align-items: stretch; }
+            .control-panel .key-hint { margin-left: 0; text-align: center; }
+            .chart-title { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="chart-container">
+    <div class="chart-title">🧭 墨卡托海图 · 恒向线 vs 大圆航线</div>
+
+    <!-- ===== 信息表格 ===== -->
+    <div class="info-panel">
+        <table>
+            <thead>
+                <tr>
+                    <th style="min-width:60px;"></th>
+                    <th>Lat</th>
+                    <th>Long</th>
+                    <th>Dist</th>
+                    <th>Course</th>
+                    <th>Timego</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="row-label gcr-label">GCR:</td>
+                    <td class="data-cell" id="latB">--</td>
+                    <td class="data-cell" id="lonB">--</td>
+                    <td class="data-cell" id="distEndB">--</td>
+                    <td class="data-cell" id="courseB">--</td>
+                    <td class="data-cell" id="timeB">--</td>
+                </tr>
+                <tr>
+                    <td class="row-label rlr-label">RLR:</td>
+                    <td class="data-cell" id="latA">--</td>
+                    <td class="data-cell" id="lonA">--</td>
+                    <td class="data-cell" id="distEndA">--</td>
+                    <td class="data-cell" id="courseA">--</td>
+                    <td class="data-cell" id="timeA">--</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ===== 航点精确输入 ===== -->
+    <div class="waypoint-settings">
+        <div class="wp-row">
+            <span class="wp-label start-label">🟥 起点</span>
+            <span class="coord-group">
+                <span>纬度</span>
+                <input type="number" id="startLatDeg" value="30" min="0" max="90" step="1"> <span class="deg-sym">°</span>
+                <input type="number" id="startLatMin" value="0.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
+                <select id="startLatDir"><option value="N" selected>N</option><option value="S">S</option></select>
+            </span>
+            <span class="coord-group">
+                <span>经度</span>
+                <input type="number" id="startLonDeg" value="140" min="0" max="180" step="1"> <span class="deg-sym">°</span>
+                <input type="number" id="startLonMin" value="0.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
+                <select id="startLonDir"><option value="E" selected>E</option><option value="W">W</option></select>
+            </span>
+        </div>
+        <div class="wp-row">
+            <span class="wp-label end-label">🟩 终点</span>
+            <span class="coord-group">
+                <span>纬度</span>
+                <input type="number" id="endLatDeg" value="20" min="0" max="90" step="1"> <span class="deg-sym">°</span>
+                <input type="number" id="endLatMin" value="0.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
+                <select id="endLatDir"><option value="N" selected>N</option><option value="S">S</option></select>
+            </span>
+            <span class="coord-group">
+                <span>经度</span>
+                <input type="number" id="endLonDeg" value="100" min="0" max="180" step="1"> <span class="deg-sym">°</span>
+                <input type="number" id="endLonMin" value="0.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
+                <select id="endLonDir"><option value="E">E</option><option value="W" selected>W</option></select>
+            </span>
+        </div>
+    </div>
+
+    <canvas id="chartCanvas" width="741" height="348"></canvas>
+
+    <div class="control-panel">
+        <div class="btn-group">
+            <button id="btnStart" class="active">▶ 启动</button>
+            <button id="btnStop" class="stop">⏹ 停止</button>
+            <button id="btnReset" class="reset">↺ 返回起点</button>
+            <button id="btnTrail" class="active">📍 轨迹（显示）</button>
+        </div>
+        <div class="speed-control">
+            <span>⚡ 航速：</span>
+            <input type="number" id="speedInput" value="78" min="0" max="100" step="1">
+            <span>kn</span>
+        </div>
+        <span class="key-hint">拖拽红/绿点改变航线</span>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ==================== DOM 引用 ====================
+    const latB   = document.getElementById('latB');
+    const lonB   = document.getElementById('lonB');
+    const distEndB = document.getElementById('distEndB');
+    const courseB = document.getElementById('courseB');
+    const timeB  = document.getElementById('timeB');
+    const latA   = document.getElementById('latA');
+    const lonA   = document.getElementById('lonA');
+    const distEndA = document.getElementById('distEndA');
+    const courseA = document.getElementById('courseA');
+    const timeA  = document.getElementById('timeA');
+
+    const startLatDeg = document.getElementById('startLatDeg');
+    const startLatMin = document.getElementById('startLatMin');
+    const startLatDir = document.getElementById('startLatDir');
+    const startLonDeg = document.getElementById('startLonDeg');
+    const startLonMin = document.getElementById('startLonMin');
+    const startLonDir = document.getElementById('startLonDir');
+    const endLatDeg   = document.getElementById('endLatDeg');
+    const endLatMin   = document.getElementById('endLatMin');
+    const endLatDir   = document.getElementById('endLatDir');
+    const endLonDeg   = document.getElementById('endLonDeg');
+    const endLonMin   = document.getElementById('endLonMin');
+    const endLonDir   = document.getElementById('endLonDir');
+
+    const speedInput = document.getElementById('speedInput');
+    const btnStart   = document.getElementById('btnStart');
+    const btnStop    = document.getElementById('btnStop');
+    const btnReset   = document.getElementById('btnReset');
+    const btnTrail   = document.getElementById('btnTrail');
+    const canvas     = document.getElementById('chartCanvas');
+    const ctx        = canvas.getContext('2d');
+
+    // ==================== 地图参数 ====================
+    const W = 741, H = 348;
+    const mapW = 680, mapH = 285;
+    const leftMargin = 31, rightMargin = 31, top = 31, bottom = 31;
+    const lonMin = 100, lonMax = 280, latMin = 0, latMax = 60;
+
+    // ==================== 墨卡托投影 ====================
+    function mercY(phi) { return Math.log(Math.tan(Math.PI/4 + phi/2)); }
+    function mercatorXY(lat, lon) {
+        const lonNorm = (lon - lonMin) / (lonMax - lonMin);
+        const x = lonNorm * mapW + leftMargin;
+        const y0 = mercY(latMin * Math.PI/180), y1 = mercY(latMax * Math.PI/180);
+        const yVal = mercY(lat * Math.PI/180);
+        const yNorm = (yVal - y0) / (y1 - y0);
+        const y = (1 - yNorm) * mapH + top;
+        return {x, y};
+    }
+    function inverseMercator(px, py) {
+        let lon = (px - leftMargin) / mapW * (lonMax - lonMin) + lonMin;
+        let yNorm = 1 - (py - top) / mapH;
+        yNorm = Math.max(0, Math.min(1, yNorm));
+        const y0 = mercY(latMin * Math.PI/180), y1 = mercY(latMax * Math.PI/180);
+        const mercVal = y0 + yNorm * (y1 - y0);
+        let lat = 2 * Math.atan(Math.exp(mercVal)) - Math.PI/2;
+        lat = lat * 180 / Math.PI;
+        lat = Math.max(latMin, Math.min(latMax, lat));
+        lon = Math.max(lonMin, Math.min(lonMax, lon));
+        return {lat, lon};
+    }
+
+    // ==================== 辅助函数 ====================
+    function haversineDist(lat1, lon1, lat2, lon2) {
+        const R = 3440.065;
+        const dLat = (lat2 - lat1) * Math.PI/180, dLon = (lon2 - lon1) * Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+    function bearingGreatCircle(lat1, lon1, lat2, lon2) {
+        const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+        const Δλ = (lon2 - lon1) * Math.PI/180;
+        const y = Math.sin(Δλ) * Math.cos(φ2);
+        const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+        let θ = Math.atan2(y, x);
+        return (θ * 180 / Math.PI + 360) % 360;
+    }
+    function bearingRhumbLine(lat1, lon1, lat2, lon2) {
+        const p1 = mercatorXY(lat1, lon1), p2 = mercatorXY(lat2, lon2);
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        let angle = Math.atan2(dx, -dy);
+        return (angle * 180 / Math.PI + 360) % 360;
+    }
+    function moveGreatCircle(lat, lon, course, dist) {
+        const R = 3440.065;
+        const φ1 = lat * Math.PI/180, λ1 = lon * Math.PI/180;
+        const θ = course * Math.PI/180;
+        const d = dist / R;
+        const φ2 = Math.asin( Math.sin(φ1)*Math.cos(d) + Math.cos(φ1)*Math.sin(d)*Math.cos(θ) );
+        const λ2 = λ1 + Math.atan2( Math.sin(θ)*Math.sin(d)*Math.cos(φ1), Math.cos(d) - Math.sin(φ1)*Math.sin(φ2) );
+        return { lat: φ2*180/Math.PI, lon: λ2*180/Math.PI };
+    }
+    function moveRhumbLine(lat, lon, course, dist) {
+        const R = 3440.065;
+        const φ1 = lat * Math.PI/180, θ = course * Math.PI/180;
+        const d = dist / R;
+        const dLat = d * Math.cos(θ);
+        const φ2 = φ1 + dLat;
+        const φ_m = (φ1 + φ2) / 2;
+        const dLon = d * Math.sin(θ) / Math.cos(φ_m);
+        const λ2 = (lon * Math.PI/180) + dLon;
+        let newLat = φ2 * 180 / Math.PI;
+        let newLon = λ2 * 180 / Math.PI;
+        newLat = Math.min(latMax, Math.max(latMin, newLat));
+        newLon = Math.max(lonMin, Math.min(lonMax, newLon));
+        return { lat: newLat, lon: newLon };
+    }
+
+    function formatLat(lat) {
+        let d = Math.abs(lat), deg = Math.floor(d), min = (d-deg)*60;
+        return `${deg}°${min.toFixed(1)}' ${lat>=0?'N':'S'}`;
+    }
+    function formatLon(lon) {
+        let display = lon, dir = 'E';
+        if (display > 180) { display = 360 - display; dir = 'W'; }
+        else if (display < 0) { display = -display; dir = 'W'; }
+        let d = Math.abs(display), deg = Math.floor(d), min = (d-deg)*60;
+        return `${deg}°${min.toFixed(1)}' ${dir}`;
+    }
+
+    // ---- 度分转换 ----
+    function dmsToDecimal(deg, min, dir, isLat) {
+        let val = deg + min / 60;
+        if (isLat) {
+            if (dir === 'S') val = -val;
+        } else {
+            if (dir === 'W') val = 360 - val;
+        }
+        return val;
+    }
+    function decimalToDms(val, isLat) {
+        let abs = Math.abs(val);
+        let deg = Math.floor(abs);
+        let min = (abs - deg) * 60;
+        let dir = '';
+        if (isLat) {
+            dir = (val >= 0) ? 'N' : 'S';
+        } else {
+            let d = val;
+            if (d > 180) { d = 360 - d; dir = 'W'; }
+            else if (d < 0) { d = -d; dir = 'W'; }
+            else dir = 'E';
+            deg = Math.floor(d);
+            min = (d - deg) * 60;
+        }
+        return { deg, min, dir };
+    }
+
+    // ==================== 数据 ====================
+    let startPoint = { lat: 30, lon: 140 };
+    let endPoint   = { lat: 20, lon: 260 }; // 100°W => 360-100=260
+    let shipA = { lat: startPoint.lat, lon: startPoint.lon, course: 0, trail: [], arrived: false };
+    let shipB = { lat: startPoint.lat, lon: startPoint.lon, course: 0, trail: [], arrived: false };
+    let rhumbBearing = bearingRhumbLine(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon);
+
+    let speed = 78;
+    let running = false;
+    let simInterval = null;
+    let showTrail = true;
+    let dragging = null;
+
+    // ==================== 更新表格数据 ====================
+    function updateInfo() {
+        // ---- 船B：GCR（大圆） ----
+        const dEndB = haversineDist(shipB.lat, shipB.lon, endPoint.lat, endPoint.lon);
+        let remainB = shipB.arrived ? '✅ 已到达' :
+                      (shipB.speed > 0.1 ? (dEndB / shipB.speed).toFixed(2)+'h' : '∞');
+        latB.textContent = formatLat(shipB.lat);
+        lonB.textContent = formatLon(shipB.lon);
+        distEndB.textContent = dEndB.toFixed(1) + ' nm';
+        courseB.textContent = shipB.course.toFixed(1) + '°';
+        timeB.textContent = remainB;
+        distEndB.className = 'data-cell' + (shipB.arrived ? ' arrived' : '');
+        timeB.className    = 'data-cell' + (shipB.arrived ? ' arrived' : '');
+
+        // ---- 船A：RLR（恒向线） ----
+        const dEndA = haversineDist(shipA.lat, shipA.lon, endPoint.lat, endPoint.lon);
+        let remainA = shipA.arrived ? '✅ 已到达' :
+                      (shipA.speed > 0.1 ? (dEndA / shipA.speed).toFixed(2)+'h' : '∞');
+        latA.textContent = formatLat(shipA.lat);
+        lonA.textContent = formatLon(shipA.lon);
+        distEndA.textContent = dEndA.toFixed(1) + ' nm';
+        courseA.textContent = shipA.course.toFixed(1) + '°';
+        timeA.textContent = remainA;
+        distEndA.className = 'data-cell' + (shipA.arrived ? ' arrived' : '');
+        timeA.className    = 'data-cell' + (shipA.arrived ? ' arrived' : '');
+
+        speedInput.value = speed.toFixed(1);
+    }
+
+    // ==================== 更新输入框（从当前点同步） ====================
+    function updateInputsFromPoints() {
+        let sLat = startPoint.lat, sLon = startPoint.lon;
+        let sLatDms = decimalToDms(sLat, true);
+        let sLonDms = decimalToDms(sLon, false);
+        startLatDeg.value = sLatDms.deg;
+        startLatMin.value = sLatDms.min.toFixed(1);
+        startLatDir.value = sLatDms.dir;
+        startLonDeg.value = sLonDms.deg;
+        startLonMin.value = sLonDms.min.toFixed(1);
+        startLonDir.value = sLonDms.dir;
+
+        let eLat = endPoint.lat, eLon = endPoint.lon;
+        let eLatDms = decimalToDms(eLat, true);
+        let eLonDms = decimalToDms(eLon, false);
+        endLatDeg.value = eLatDms.deg;
+        endLatMin.value = eLatDms.min.toFixed(1);
+        endLatDir.value = eLatDms.dir;
+        endLonDeg.value = eLonDms.deg;
+        endLonMin.value = eLonDms.min.toFixed(1);
+        endLonDir.value = eLonDms.dir;
+    }
+
+    // ==================== 从输入框更新航点 ====================
+    function updatePointsFromInputs() {
+        let sLat = dmsToDecimal(parseFloat(startLatDeg.value)||0, parseFloat(startLatMin.value)||0, startLatDir.value, true);
+        let sLon = dmsToDecimal(parseFloat(startLonDeg.value)||0, parseFloat(startLonMin.value)||0, startLonDir.value, false);
+        let eLat = dmsToDecimal(parseFloat(endLatDeg.value)||0, parseFloat(endLatMin.value)||0, endLatDir.value, true);
+        let eLon = dmsToDecimal(parseFloat(endLonDeg.value)||0, parseFloat(endLonMin.value)||0, endLonDir.value, false);
+
+        sLat = Math.min(latMax, Math.max(latMin, sLat));
+        sLon = Math.min(lonMax, Math.max(lonMin, sLon));
+        eLat = Math.min(latMax, Math.max(latMin, eLat));
+        eLon = Math.min(lonMax, Math.max(lonMin, eLon));
+
+        startPoint.lat = sLat; startPoint.lon = sLon;
+        endPoint.lat = eLat; endPoint.lon = eLon;
+
+        rhumbBearing = bearingRhumbLine(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon);
+
+        // 重置船舶到新起点（并停止模拟）
+        if (running) {
+            running = false;
+            clearInterval(simInterval);
+            simInterval = null;
+            btnStart.textContent = '▶ 启动';
+            btnStart.classList.add('active');
+        }
+        shipA.lat = startPoint.lat; shipA.lon = startPoint.lon;
+        shipB.lat = startPoint.lat; shipB.lon = startPoint.lon;
+        shipA.trail = [{lat: shipA.lat, lon: shipA.lon}];
+        shipB.trail = [{lat: shipB.lat, lon: shipB.lon}];
+        shipA.course = rhumbBearing;
+        shipB.course = 0;
+        shipA.arrived = false;
+        shipB.arrived = false;
+
+        drawChart();
+    }
+
+    // 绑定输入事件
+    const wpInputs = [startLatDeg, startLatMin, startLatDir, startLonDeg, startLonMin, startLonDir,
+                      endLatDeg, endLatMin, endLatDir, endLonDeg, endLonMin, endLonDir];
+    wpInputs.forEach(inp => {
+        inp.addEventListener('change', updatePointsFromInputs);
+        inp.addEventListener('input', updatePointsFromInputs);
+    });
+
+    // ==================== 绘制海图 ====================
+    function drawChart() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#f0f8ff';
+        ctx.fillRect(0, 0, W, H);
+
+        // 经纬网
+        ctx.strokeStyle = '#7aa8c7';
+        ctx.lineWidth = 1;
+        for (let lon = lonMin; lon <= lonMax; lon += 10) {
+            const p = mercatorXY(latMin, lon);
+            ctx.beginPath(); ctx.moveTo(p.x, top); ctx.lineTo(p.x, H-bottom); ctx.stroke();
+        }
+        for (let lat = latMin; lat <= latMax; lat += 10) {
+            const p = mercatorXY(lat, lonMin);
+            ctx.beginPath(); ctx.moveTo(leftMargin, p.y); ctx.lineTo(W-rightMargin, p.y); ctx.stroke();
+        }
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(leftMargin, top, mapW, mapH);
+
+        // 刻度
+        const tickLen = 5;
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 0.8;
+        for (let lon = lonMin; lon <= lonMax; lon += 0.1) {
+            const p = mercatorXY(latMin, lon);
+            ctx.beginPath(); ctx.moveTo(p.x, H-bottom); ctx.lineTo(p.x, H-bottom+tickLen); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(p.x, top); ctx.lineTo(p.x, top-tickLen); ctx.stroke();
+        }
+        for (let lat = latMin; lat <= latMax; lat += 0.1) {
+            const p = mercatorXY(lat, lonMin);
+            ctx.beginPath(); ctx.moveTo(leftMargin, p.y); ctx.lineTo(leftMargin-tickLen, p.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(W-rightMargin, p.y); ctx.lineTo(W-rightMargin+tickLen, p.y); ctx.stroke();
+        }
+
+        // 经纬度标注
+        ctx.fillStyle = '#222';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for (let lon = lonMin; lon <= lonMax; lon += 10) {
+            const p = mercatorXY(latMin, lon);
+            let label = (lon <= 180) ? lon+'°E' : (360-lon)+'°W';
+            ctx.fillText(label, p.x, H-bottom+4);
+        }
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let lat = latMin; lat <= latMax; lat += 10) {
+            const p = mercatorXY(lat, lonMin);
+            ctx.fillText(lat+'°N', leftMargin-8, p.y);
+        }
+
+        // ---- 起点 & 终点 ----
+        function drawPoint(lat, lon, color, label, alignLeft) {
+            const p = mercatorXY(lat, lon);
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, 2*Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = '#000';
+            ctx.font = '11px Arial';
+            if (alignLeft) {
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(label, p.x - 8, p.y - 4);
+            } else {
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(label, p.x + 10, p.y - 4);
+            }
+        }
+        drawPoint(startPoint.lat, startPoint.lon, '#e30000', '起点', true);
+        drawPoint(endPoint.lat, endPoint.lon, '#00aa00', '终点', false);
+
+        // ---- 轨迹 ----
+        if (showTrail) {
+            if (shipA.trail.length > 1) {
+                ctx.strokeStyle = 'rgba(204, 0, 0, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i=0; i<shipA.trail.length; i++) {
+                    const p = mercatorXY(shipA.trail[i].lat, shipA.trail[i].lon);
+                    if (i===0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
+            if (shipB.trail.length > 1) {
+                ctx.strokeStyle = 'rgba(184, 134, 11, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i=0; i<shipB.trail.length; i++) {
+                    const p = mercatorXY(shipB.trail[i].lat, shipB.trail[i].lon);
+                    if (i===0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        // ---- 船舶 ----
+        function drawShip(ship, mainColor, deckColor) {
+            const p = mercatorXY(ship.lat, ship.lon);
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(ship.course * Math.PI / 180);
+
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 5.5, 13, 0, 0, Math.PI * 2);
+            ctx.fillStyle = mainColor;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -15.5);
+            ctx.quadraticCurveTo(-5, -11, -4, -7);
+            ctx.lineTo(4, -7);
+            ctx.quadraticCurveTo(5, -11, 0, -15.5);
+            ctx.fillStyle = mainColor;
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.ellipse(0, 2, 3, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -13);
+            ctx.lineTo(0, 10);
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+        drawShip(shipA, '#cc0000', '#ff8888');
+        drawShip(shipB, '#b8860b', '#ffcc66');
+
+        // 同步输入框（若拖拽更新）
+        updateInputsFromPoints();
+        // 更新表格
+        updateInfo();
+    }
+
+    // ==================== 模拟步进 ====================
+    function stepShips() {
+        if (!running) return;
+        const stepHours = 0.05;
+        const dist = speed * stepHours;
+
+        if (!shipA.arrived) {
+            const dEndA = haversineDist(shipA.lat, shipA.lon, endPoint.lat, endPoint.lon);
+            if (dEndA < 0.5) {
+                shipA.arrived = true;
+                shipA.lat = endPoint.lat;
+                shipA.lon = endPoint.lon;
+            } else {
+                const newA = moveRhumbLine(shipA.lat, shipA.lon, shipA.course, dist);
+                shipA.lat = newA.lat;
+                shipA.lon = newA.lon;
+                shipA.trail.push({lat: shipA.lat, lon: shipA.lon});
+            }
+        }
+
+        if (!shipB.arrived) {
+            const dEndB = haversineDist(shipB.lat, shipB.lon, endPoint.lat, endPoint.lon);
+            if (dEndB < 0.5) {
+                shipB.arrived = true;
+                shipB.lat = endPoint.lat;
+                shipB.lon = endPoint.lon;
+            } else {
+                const bearing = bearingGreatCircle(shipB.lat, shipB.lon, endPoint.lat, endPoint.lon);
+                shipB.course = bearing;
+                const newB = moveGreatCircle(shipB.lat, shipB.lon, shipB.course, dist);
+                shipB.lat = newB.lat;
+                shipB.lon = newB.lon;
+                shipB.trail.push({lat: shipB.lat, lon: shipB.lon});
+            }
+        }
+
+        if (shipA.arrived && shipB.arrived) {
+            running = false;
+            clearInterval(simInterval);
+            simInterval = null;
+            btnStart.textContent = '▶ 启动';
+            btnStart.classList.add('active');
+            drawChart();
+            return;
+        }
+
+        drawChart();
+    }
+
+    // ==================== 控制函数 ====================
+    function startShips() {
+        if (running) return;
+        if (shipA.arrived || shipB.arrived) {
+            shipA.lat = startPoint.lat; shipA.lon = startPoint.lon;
+            shipB.lat = startPoint.lat; shipB.lon = startPoint.lon;
+            shipA.trail = [{lat: shipA.lat, lon: shipA.lon}];
+            shipB.trail = [{lat: shipB.lat, lon: shipB.lon}];
+            shipA.course = rhumbBearing;
+            shipB.course = 0;
+            shipA.arrived = false;
+            shipB.arrived = false;
+        }
+        running = true;
+        btnStart.textContent = '▶ 运行中';
+        btnStart.classList.remove('active');
+        if (simInterval) clearInterval(simInterval);
+        simInterval = setInterval(stepShips, 200);
+        drawChart();
+    }
+
+    function stopShips() {
+        running = false;
+        if (simInterval) {
+            clearInterval(simInterval);
+            simInterval = null;
+        }
+        btnStart.textContent = '▶ 启动';
+        btnStart.classList.add('active');
+        drawChart();
+    }
+
+    function resetToStart() {
+        if (running) {
+            running = false;
+            if (simInterval) {
+                clearInterval(simInterval);
+                simInterval = null;
+            }
+            btnStart.textContent = '▶ 启动';
+            btnStart.classList.add('active');
+        }
+        shipA.lat = startPoint.lat;
+        shipA.lon = startPoint.lon;
+        shipB.lat = startPoint.lat;
+        shipB.lon = startPoint.lon;
+        shipA.trail = [{lat: shipA.lat, lon: shipA.lon}];
+        shipB.trail = [{lat: shipB.lat, lon: shipB.lon}];
+        shipA.course = rhumbBearing;
+        shipB.course = 0;
+        shipA.arrived = false;
+        shipB.arrived = false;
+        drawChart();
+    }
+
+    // ==================== 速度控制 ====================
+    function updateSpeed(val) {
+        let v = parseFloat(val);
+        if (isNaN(v)) v = 0;
+        v = Math.min(100, Math.max(0, v));
+        speed = v;
+        shipA.speed = speed;
+        shipB.speed = speed;
+        speedInput.value = speed.toFixed(1);
+        drawChart();
+    }
+    speedInput.addEventListener('input', function() {
+        updateSpeed(this.value);
+    });
+
+    // ==================== 鼠标拖拽航点 ====================
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    }
+    function isPointHit(lat, lon, mx, my) {
+        const p = mercatorXY(lat, lon);
+        const dx = p.x - mx, dy = p.y - my;
+        return (dx*dx + dy*dy) <= 100;
+    }
+
+    canvas.addEventListener('mousedown', function(e) {
+        const pos = getMousePos(e);
+        if (isPointHit(startPoint.lat, startPoint.lon, pos.x, pos.y)) dragging = 'start';
+        else if (isPointHit(endPoint.lat, endPoint.lon, pos.x, pos.y)) dragging = 'end';
+    });
+    canvas.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        const pos = getMousePos(e);
+        const {lat, lon} = inverseMercator(pos.x, pos.y);
+        if (dragging === 'start') {
+            startPoint.lat = lat; startPoint.lon = lon;
+        } else if (dragging === 'end') {
+            endPoint.lat = lat; endPoint.lon = lon;
+        }
+        rhumbBearing = bearingRhumbLine(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon);
+        if (!running || shipA.arrived || shipB.arrived) {
+            shipA.lat = startPoint.lat; shipA.lon = startPoint.lon;
+            shipB.lat = startPoint.lat; shipB.lon = startPoint.lon;
+            shipA.trail = [{lat: shipA.lat, lon: shipA.lon}];
+            shipB.trail = [{lat: shipB.lat, lon: shipB.lon}];
+            shipA.course = rhumbBearing;
+            shipB.course = 0;
+            shipA.arrived = false;
+            shipB.arrived = false;
+        }
+        drawChart();
+    });
+    canvas.addEventListener('mouseup', function() { if (dragging) { dragging = null; drawChart(); } });
+    canvas.addEventListener('mouseleave', function() { if (dragging) { dragging = null; drawChart(); } });
+
+    // ==================== 按钮事件 ====================
+    btnStart.addEventListener('click', startShips);
+    btnStop.addEventListener('click', stopShips);
+    btnReset.addEventListener('click', resetToStart);
+    btnTrail.addEventListener('click', function() {
+        showTrail = !showTrail;
+        btnTrail.textContent = showTrail ? '📍 轨迹（显示）' : '📍 轨迹（隐藏）';
+        drawChart();
+    });
+
+    // ==================== 初始化 ====================
+    shipA.course = rhumbBearing;
+    shipA.speed = speed;
+    shipB.speed = speed;
+    shipA.trail.push({lat: shipA.lat, lon: shipA.lon});
+    shipB.trail.push({lat: shipB.lat, lon: shipB.lon});
+    // 先同步输入框
+    updateInputsFromPoints();
+    // 绘制并显示数据
+    drawChart();
+    window.addEventListener('resize', drawChart);
+
+    // 额外强制刷新一次，确保表格显示
+    setTimeout(function() {
+        drawChart();
+    }, 100);
+})();
+</script>
+</body>
+</html>
