@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>索星卡模拟器‑含月亮</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft Yahei",sans-serif;}
+body{background:#efefef;padding:20px;}
+.container{max-width:1180px;margin:0 auto;}
+.control-panel{background:#fff;padding:16px;border-radius:8px;margin-bottom:16px;box-shadow:0 1px 4px #0002;}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+label{font-size:14px;}
+input[type="number"]{width:72px;padding:5px;font-size:14px;}
+input[type="range"]{width:260px;vertical-align:middle;}
+button{padding:5px 10px;font-size:14px;cursor:pointer;}
+.readout-box{padding:4px 8px;background:#f4f4f4;border:1px solid #999;min-width:90px;font-size:14px;}
+.star-wrap{position:relative;width:960px;height:960px;margin:0 auto;border:1px solid #ccc;background:#fff;cursor:default;user-select:none;}
+.base-img{position:absolute;left:0;top:0;width:960px;height:960px;pointer-events:none;}
+.bg-star-layer{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2;}
+.bg-star-dot{position:absolute;width:6px;height:6px;background:#2266bb;border-radius:50%;margin-left:-3px;margin-top:-3px;}
+.bg-star-label{position:absolute;font-size:10px;color:#114488;pointer-events:none;white-space:nowrap;}
+.panel-wrap{position:absolute;left:0;top:0;width:960px;height:960px;pointer-events:none;z-index:4;}
+.panel-img{position:absolute;width:960px;height:960px;}
+.data-panel{margin-top:10px;background:#fff;padding:10px;border-radius:6px;}
+.cross-cursor{position:absolute;pointer-events:none;z-index:10;}
+.cross-h{position:absolute;height:1px;background:#f00;left:-15px;right:-15px;top:0;}
+.cross-v{position:absolute;width:1px;background:#f00;top:-15px;bottom:-15px;left:0;}
+.navstar-layer{position:absolute;left:0;top:0;width:100%;height:100%;z-index:6;}
+.navstar-dot{position:absolute;width:11px;height:11px;background:rgba(200,36,35,0.55);border:1.5px solid #c82423;border-radius:50%;margin-left:-5.5px;margin-top:-5.5px;cursor:move;box-shadow:0 0 0 1px rgba(255,255,255,0.7);}
+.navstar-dot:hover{background:#c82423;}
+.navstar-dot.aligned{background:rgba(0,180,0,0.55);border-color:#0a0;}
+.navstar-dot.aligned:hover{background:#0a0;}
+.navstar-dot.special-sun{background:rgba(255,200,0,0.75);border:2px solid #ff8c00;width:16px;height:16px;margin-left:-8px;margin-top:-8px;box-shadow:0 0 10px rgba(255,200,0,0.9);}
+.navstar-dot.special-sun:hover{background:#ffc800;}
+.navstar-dot.special-venus{background:rgba(180,100,255,0.65);border-color:#8a2be2;box-shadow:0 0 6px rgba(180,100,255,0.8);}
+.navstar-dot.special-venus:hover{background:#b464ff;}
+.navstar-dot.special-mars{background:rgba(255,90,50,0.7);border-color:#cc2200;box-shadow:0 0 6px rgba(255,90,50,0.8);}
+.navstar-dot.special-mars:hover{background:#ff5a32;}
+.navstar-dot.special-jupiter{background:rgba(255,180,80,0.7);border-color:#cc8800;width:13px;height:13px;margin-left:-6.5px;margin-top:-6.5px;box-shadow:0 0 8px rgba(255,180,80,0.8);}
+.navstar-dot.special-jupiter:hover{background:#ffb450;}
+.navstar-dot.special-saturn{background:rgba(200,220,90,0.7);border-color:#889922;box-shadow:0 0 6px rgba(200,220,90,0.8);}
+.navstar-dot.special-saturn:hover{background:#c8dc5a;}
+/* ★ 月亮样式（新加） */
+.navstar-dot.special-moon{background:rgba(220,220,255,0.8);border:2px solid #aac;width:16px;height:16px;margin-left:-8px;margin-top:-8px;box-shadow:0 0 10px rgba(200,200,255,0.9);}
+.navstar-dot.special-moon:hover{background:#e0e0ff;}
+.navstar-label{position:absolute;color:#c00;font-size:11px;font-weight:bold;pointer-events:none;white-space:nowrap;text-shadow:1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff;z-index:7;}
+.navstar-label.aligned{color:#0a0;}
+.navstar-label.special-sun{color:#ff8c00;font-size:12px;}
+.navstar-label.special-venus{color:#8a2be2;}
+.navstar-label.special-mars{color:#cc2200;}
+.navstar-label.special-jupiter{color:#cc8800;}
+.navstar-label.special-saturn{color:#889922;}
+.navstar-label.special-moon{color:#6688cc;font-size:12px;}
+.navstar-tooltip{position:absolute;background:#c82423;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;pointer-events:none;white-space:nowrap;display:none;z-index:20;font-weight:bold;}
+.click-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#c82423;color:#fff;padding:12px 24px;border-radius:6px;font-size:15px;font-weight:bold;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.4);display:none;max-width:600px;text-align:center;}
+.click-toast.show{display:block;}
+.drag-toast{position:fixed;top:160px;left:50%;transform:translateX(-50%);background:#0a0;color:#fff;padding:10px 20px;border-radius:6px;font-size:18px;font-weight:bold;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.4);display:none;}
+.drag-toast.show{display:block;}
+.help-toggle{background:#f0f4f8;padding:4px 12px;border-radius:6px;cursor:pointer;font-weight:bold;user-select:none;margin-bottom:0;line-height:1.5;}
+.help-content{max-height:0;overflow:hidden;transition:max-height 0.45s ease;background:#f8fafc;padding:0 12px;border-radius:6px;font-size:13px;line-height:1.6;margin-bottom:0;}
+.help-content.open{max-height:1500px;padding:12px;margin-bottom:8px;}
+input[type="file"].hide-file{display:none;}
+.aligned-count{display:inline-block;background:#0a0;color:#fff;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;}
+#advancedPanel{display:none;background:#f8f8f8;border:1px dashed #bbb;border-radius:6px;padding:10px;margin-top:6px;}
+#advancedPanel.open{display:block;}
+.btn-advanced{background:#666;color:#fff;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;font-size:13px;}
+.btn-advanced:hover{background:#444;}
+.below-chk{background:#e6f0ff;padding:4px 8px;border-radius:4px;border:1px solid #1890ff;}
+.moon-chk{background:#eef0ff;padding:4px 8px;border-radius:4px;border:1px solid #6688cc;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="control-panel">
+        <!-- 使用说明 开始 -->
+        <div class="help-toggle" id="helpToggle">📖 使用说明（点击展开 / 收起）</div>
+        <div class="help-content" id="helpBox">
+          <h4>本索星卡模拟器为本人业余制作，用于认星和航海测天定位练习。</h4>
+          <h4>一、界面使用说明</h4>
+          <p>1. <b>面板旋转角度</b>：输入角度值（或使用键盘 ←→ 键）旋转面板到任意位置。</p>
+          <p>2. <b>方位归零</b>：面板返回初始角度（0°）。</p>
+          <p>3. <b>选择底板 / 面板</b>：点击按钮导入索星卡底板和面板图片。</p>
+          <p style="margin-left:24px;">（1）电脑：图片与 HTML 放同一文件夹，打开即显示；</p>
+          <p style="margin-left:24px;">（2）手机：先将图片保存到相册，再点击导入。</p>
+          <p>4. <b>高级设置</b>：用于调整星体位置，平时无需打开。</p>
+          <p style="margin-left:24px;">已内置 <b>76 颗航用恒星</b> + <b>太阳 + 4 颗行星 + 月亮</b>。</p>
+          <p>5. <b>测者纬度 / 经度</b>：纬度（北 +、南 −），经度（东 +、西 −），输入后点击【应用】。</p>
+          <p style="margin-left:24px;">默认：纬度 30°N，经度 120°E。</p>
+          <p>6. <b>观测时间</b>：填写区时（当地手表 / 手机时间）。</p>
+          <p>7. <b>时区号</b>：根据输入的经度自动计算，一般无需手动修改。</p>
+          <p>8. <b>执行</b>：输入经纬度和日期时间后，点击【执行】按钮，面板自动转到该时刻的星空。</p>
+          <p>9. <b>天体显示选项</b>：</p>
+          <p style="margin-left:24px;">（1）🟡 <b>底板北天星</b>：显示程序绘制的所有星体，平时无需勾选；</p>
+          <p style="margin-left:24px;">（2）🔴 <b>面板航用星</b>：仅显示测者可见的航用星体，<b>建议勾选</b>；</p>
+          <p style="margin-left:24px;">（3）☀ <b>太阳 + 行星</b>：显示太阳和四颗行星；</p>
+          <p style="margin-left:24px;">（4）🌙 <b>月亮</b>：显示月亮；</p>
+          <p style="margin-left:24px;">（5）🌍 <b>显示地平线下</b>：用于调整星体位置时参考，平时无需勾选。</p>
+          <h4>二、主界面说明</h4>
+          <p>1. <b>底板</b>：外圈日期、中圈时间（活动）、内圈方位。默认日期为 3 月 21 日 0 点。</p>
+          <p>2. <b>面板</b>：</p>
+          <p style="margin-left:24px;">（1）默认采用 30°N（根据输入纬度自动调整）；</p>
+          <p style="margin-left:24px;">（2）蓝色椭圆：中心为天顶，外圈为测者地平圈，网格为高度和方位；</p>
+          <p style="margin-left:24px;">（3）地平圈外的四条弧段分别为 −6° ~ −12° 的晨昏线；</p>
+          <p style="margin-left:24px;">（4）椭圆内的星体为当时可见星体，点击可显示星名、计算高度和方位。</p>
+          <h4>三、方位角 / 高度角显示栏</h4>
+          <p>1. <b>方位角 Az / 高度角 Alt</b>：显示相对于测者天顶（椭圆中心）的天体高度和方位，主要用于认星。</p>
+          <p>2. <b>【锁定】方位 Az / Alt</b>：显示相对于测者位置（经纬度）的天体计算高度和方位，主要用于航海测星定位。</p>
+          <h4>四、误差说明</h4>
+          <p>1. 索星卡在制作过程中可能存在误差；</p>
+          <p>2. 底板与面板投影方法不同，会存在视觉误差，尤其在星体接近地平圈时视觉误差会放大，但天体的计算高度和方位误差很小，不影响定位精度。</p>
+        </div>
+        <!-- 使用说明 结束 -->
+        <div class="row">
+            <label>面板旋转角度(°)：</label>
+            <input id="rotateInput" type="number" value="0.0" min="0" max="360" step="0.1">
+            <button id="setRotateBtn">设置旋转</button>
+            <button id="btnZeroAz">方位归零</button>
+            <button id="btnSelBaseImg">选择底板图片</button>
+            <button id="btnSelPanelImg">选择面板图片</button>
+            <input id="fileBaseImg" type="file" accept="image/*" class="hide-file">
+            <input id="filePanelImg" type="file" accept="image/*" class="hide-file">
+            <button id="btnToggleAdvanced" class="btn-advanced">⚙️ 高级设置（点击展开 / 收起）</button>
+        </div>
+        <div class="row">
+            <label>测者纬度°:</label>
+            <input id="inpObsLat" type="number" value="30.0" min="-90" max="90" step="0.1">
+            <button id="btnApplyLat">应用纬度</button>
+            <label>测者经度°:</label>
+            <input id="inpObsLon" type="number" value="120.0" min="-180" max="180" step="0.1">
+            <button id="btnApplyLon">应用经度</button>
+        </div>
+        <div class="row">
+            <label>年:</label><input id="inpYear" type="number" value="2026">
+            <label>月:</label><input id="inpMon" type="number" value="10" min="1" max="12">
+            <label>日:</label><input id="inpDay" type="number" value="1" min="1" max="31">
+            <label>区时 时:</label><input id="inpHr" type="number" value="20" min="0" max="23">
+            <label>分:</label><input id="inpMin" type="number" value="0" min="0" max="59">
+            <label>时区(东-西+):</label><input id="inpTZ" type="number" value="-8" step="0.5">
+            <button id="btnSetByTime">执行</button>
+        </div>
+        <div class="row">
+            <label><input id="chkShowBgStar" type="checkbox">🟡底板北天星</label>
+            <label><input id="chkShowNavStar" type="checkbox" checked>🔴面板航用星</label>
+            <label style="background:#e6ffe6;padding:4px 8px;border-radius:4px;border:1px solid #0a0;">
+                <input id="chkShowStarName" type="checkbox" checked>🏷 显示星名
+            </label>
+            <label style="background:#fff4e6;padding:4px 8px;border-radius:4px;border:1px solid #cc8800;">
+                <input id="chkShowSpecial" type="checkbox" checked>☀ 太阳 + 行星
+            </label>
+            <label class="moon-chk">
+                <input id="chkShowMoon" type="checkbox" checked>🌙 月亮
+            </label>
+            <label class="below-chk">
+                <input id="chkShowBelow" type="checkbox">🌍 显示地平线下
+            </label>
+        </div>
+        <div id="advancedPanel">
+            <div class="row" style="background:#e8f5e9;padding:6px 10px;border-radius:4px;border:1px solid #0a0;">
+                <b>🎯 对齐进度：</b>
+                <span class="aligned-count" id="alignedCount">已对齐：0 / 0</span>
+            </div>
+            <div class="row" style="background:#fffbe6;padding:8px;border-radius:4px;border:1px dashed #e0a800;">
+                <b>🔧 底板投影中心：</b>
+                <label>中心X:</label>
+                <input id="inpCenterX" type="number" value="560" step="0.5" style="width:80px;">
+                <label>中心Y:</label>
+                <input id="inpCenterY" type="number" value="480" step="0.5" style="width:80px;">
+                <label>赤道半径:</label>
+                <input id="inpProjR" type="number" value="393" step="0.5" style="width:80px;">
+                <button id="btnApplyCal">应用校准</button>
+            </div>
+            <div class="row" style="background:#f6ffe6;padding:8px;border-radius:4px;border:2px dashed #52c41a;">
+                <b>📐 初始投影 k:</b>
+                <input id="inpProjK" type="number" value="1.30" step="0.01" style="width:70px;">
+                <input id="rngProjK" type="range" min="0.7" max="1.8" value="1.30" step="0.01">
+                <span id="projKRead" style="font-family:Consolas,monospace;color:#52c41a;">1.30</span>
+                <button id="btnResetK">重置</button>
+            </div>
+            <div class="row" style="background:#e6f7ff;padding:8px;border-radius:4px;border:1px dashed #1890ff;">
+                <b>🧭 SHA方向基准：</b>
+                <input id="inpProjShift" type="number" value="180" step="1" style="width:80px;">°
+                <input id="rngProjShift" type="range" min="0" max="360" value="180" step="1">
+                <span id="projShiftRead" style="font-family:Consolas,monospace;">180°</span>
+                <button id="btnResetShift">归零</button>
+                <button id="btnSetShift180" style="background:#52c41a;color:#fff;">设为180°</button>
+            </div>
+            <div class="row" style="background:#ffe6e6;padding:8px;border-radius:4px;border:2px dashed #ff4d4f;">
+                <b>🎯 手动对齐：</b>
+                <button id="btnClearOffsets" style="background:#ff4d4f;color:#fff;">清除所有对齐偏移</button>
+                <button id="btnExportOffsets">导出偏移</button>
+                <button id="btnImportOffsets">导入偏移</button>
+            </div>
+        </div>
+    </div>
+    <div class="star-wrap" id="canvasWrap">
+        <img id="baseImgDom" class="base-img" src="Star base plate.png">
+        <div class="bg-star-layer" id="bgStarLayer"></div>
+        <div class="navstar-layer" id="navStarLayer"></div>
+        <div id="panelWrap" class="panel-wrap">
+            <img id="panelImgDom" class="panel-img" src="Star face-plate.png">
+        </div>
+        <div class="cross-cursor" id="crossCursor">
+            <div class="cross-h"></div>
+            <div class="cross-v"></div>
+        </div>
+    </div>
+    <div class="data-panel">
+        <div class="row">
+            <div class="readout-box">方位角Az：<span id="azRead">---</span> °</div>
+            <div class="readout-box">高度角Alt：<span id="altRead">---</span> °</div>
+            <div class="readout-box">【锁定】<span id="lockStarName"></span> Az:<span id="azLock">--</span> Alt:<span id="altLock">--</span></div>
+            <button id="clearLock">清除锁定</button>
+        </div>
+    </div>
+</div>
+
+<div class="click-toast" id="clickToast"></div>
+<div class="drag-toast" id="dragToast"></div>
+
+<script>
+// ========== DOM ==========
+const $ = id => document.getElementById(id);
+const helpToggle=$("helpToggle"),helpBox=$("helpBox");
+helpToggle.addEventListener("click",()=>helpBox.classList.toggle("open"));
+const btnToggleAdvanced=$("btnToggleAdvanced"),advancedPanel=$("advancedPanel");
+btnToggleAdvanced.addEventListener("click",()=>advancedPanel.classList.toggle("open"));
+
+const btnSelBaseImg=$("btnSelBaseImg"),btnSelPanelImg=$("btnSelPanelImg");
+const fileBaseImg=$("fileBaseImg"),filePanelImg=$("filePanelImg");
+const baseImgDom=$("baseImgDom"),panelImgDom=$("panelImgDom");
+btnSelBaseImg.addEventListener("click",()=>fileBaseImg.click());
+btnSelPanelImg.addEventListener("click",()=>filePanelImg.click());
+fileBaseImg.addEventListener("change",ev=>{const f=ev.target.files[0];if(f)baseImgDom.src=URL.createObjectURL(f);});
+filePanelImg.addEventListener("change",ev=>{const f=ev.target.files[0];if(f)panelImgDom.src=URL.createObjectURL(f);});
+
+const rotateInput=$("rotateInput"),canvasWrap=$("canvasWrap");
+const azRead=$("azRead"),altRead=$("altRead");
+const clearLockBtn=$("clearLock"),crossCursor=$("crossCursor");
+const azLock=$("azLock"),altLock=$("altLock"),lockStarName=$("lockStarName");
+const chkShowNavStar=$("chkShowNavStar"),chkShowStarName=$("chkShowStarName"),chkShowSpecial=$("chkShowSpecial");
+const chkShowMoon=$("chkShowMoon");   // ★ 月亮
+const chkShowBelow=$("chkShowBelow");
+const navStarLayer=$("navStarLayer");
+const inpObsLat=$("inpObsLat"),btnApplyLat=$("btnApplyLat");
+const inpObsLon=$("inpObsLon"),btnApplyLon=$("btnApplyLon");
+const chkShowBgStar=$("chkShowBgStar"),bgStarLayer=$("bgStarLayer");
+const btnZeroAz=$("btnZeroAz"),btnSetByTime=$("btnSetByTime");
+const inpCenterX=$("inpCenterX"),inpCenterY=$("inpCenterY"),inpProjR=$("inpProjR"),btnApplyCal=$("btnApplyCal");
+const clickToast=$("clickToast"),dragToast=$("dragToast");
+const inpProjShift=$("inpProjShift"),rngProjShift=$("rngProjShift"),projShiftRead=$("projShiftRead");
+const btnResetShift=$("btnResetShift"),btnSetShift180=$("btnSetShift180");
+const inpProjK=$("inpProjK"),rngProjK=$("rngProjK"),projKRead=$("projKRead"),btnResetK=$("btnResetK");
+const alignedCount=$("alignedCount");
+const btnClearOffsets=$("btnClearOffsets"),btnExportOffsets=$("btnExportOffsets"),btnImportOffsets=$("btnImportOffsets");
+const inpTZ=$("inpTZ");
+
+// ========== 参数 ==========
+let rotateDeg = 0;
+let offsetCx = 0, offsetCy = 0;
+let HALF_X = 560, HALF_Y = 480, BG_MAX_R = 393;
+const PANEL_CX = 480, PANEL_CY = 480;
+let PROJ_SHIFT = 180, PROJ_K = 1.30;
+let lockReading = false;
+let lockedStarName = "";
+let OBS_LAT = 30.0, OBS_LON = 120.0;
+let STAR_OFFSETS = {};
+let SPECIAL_OFFSETS = {};
+let SPECIAL_BODIES = {};
+
+// ========== 星表 ==========
+const navStarList = [
+    {name:"天狼",sha:258.7125,dec:-16.7167},{name:"老人",sha:255.2292,dec:-52.6917},
+    {name:"南门二",sha:142.5083,dec:-60.8333},{name:"大角",sha:146.0833,dec:19.1833},
+    {name:"织女",sha:80.6583,dec:38.7833},{name:"五车二",sha:280.8208,dec:45.9833},
+    {name:"参宿七",sha:281.5917,dec:-8.2000},{name:"南河三",sha:256.7042,dec:5.2333},
+    {name:"水委一",sha:285.6375,dec:-57.2333},{name:"参宿四",sha:271.2083,dec:7.4000},
+    {name:"毕宿五",sha:291.0125,dec:16.5000},{name:"角宿一",sha:158.7083,dec:-11.1667},
+    {name:"河鼓二",sha:62.304,dec:8.868},{name:"北河二",sha:246.4042,dec:31.8833},
+    {name:"北河三",sha:243.7542,dec:28.0333},{name:"心宿二",sha:112.6458,dec:-26.4333},
+    {name:"天津四",sha:49.6208,dec:45.2833},{name:"轩辕十四",sha:207.9125,dec:12.1167},
+    {name:"北落师门",sha:15.6625,dec:-29.5833},{name:"室宿一",sha:14.0792,dec:29.0833},
+    {name:"娄宿三",sha:33.5208,dec:23.4833},{name:"天枢",sha:194.2875,dec:61.7500},
+    {name:"玉衡",sha:208.2125,dec:58.9833},{name:"摇光",sha:221.9958,dec:49.3167},
+    {name:"贯索四",sha:235.7917,dec:26.6833},{name:"库楼七",sha:210.5792,dec:-36.0167},
+    {name:"氐宿一",sha:223.2792,dec:-16.1167},{name:"弧矢七",sha:105.4708,dec:-28.8833},
+    {name:"海石一",sha:111.1583,dec:-58.8000},{name:"天记",sha:333.2917,dec:-46.8833},
+    {name:"尾宿八",sha:109.4292,dec:-37.3333},{name:"箕宿一",sha:131.2292,dec:-34.4167},
+    {name:"斗宿六",sha:137.9292,dec:-26.3167},{name:"孔雀十一",sha:327.9583,dec:-56.7333},
+    {name:"土司空",sha:12.5708,dec:-18.2333},{name:"天苑一",sha:46.2083,dec:-40.3333},
+    {name:"王良四",sha:6.7292,dec:56.5333},{name:"策",sha:11.8542,dec:44.4167},
+    {name:"上卫增一",sha:256.9792,dec:49.4833},{name:"宗人四",sha:265.5292,dec:12.5833},
+    {name:"天棓四",sha:270.2708,dec:51.4833},{name:"七公七",sha:252.7292,dec:27.9833},
+    {name:"北极星",sha:319.01,dec:89.27},{name:"天璇",sha:165.91,dec:56.38},
+    {name:"天玑",sha:178.46,dec:53.69},{name:"天权",sha:183.78,dec:57.03},
+    {name:"开阳",sha:199.08,dec:54.93},{name:"太子",sha:176.40,dec:71.83},
+    {name:"北极二",sha:137.61,dec:74.16},{name:"天钩五",sha:0.45,dec:62.59},
+    {name:"王良一",sha:13.87,dec:56.54},{name:"天船三",sha:309.02,dec:49.86},
+    {name:"大陵五",sha:321.72,dec:40.96},{name:"娄宿一",sha:335.03,dec:20.81},
+    {name:"天大将军一",sha:357.72,dec:29.09},{name:"奎宿九",sha:29.50,dec:35.62},
+    {name:"壁宿二",sha:313.82,dec:15.21},{name:"室宿二",sha:305.59,dec:28.08},
+    {name:"危宿三",sha:33.71,dec:9.88},{name:"参宿五",sha:278.90,dec:6.35},
+    {name:"参宿一",sha:275.74,dec:-1.94},{name:"参宿二",sha:276.40,dec:-1.20},
+    {name:"参宿三",sha:276.62,dec:-0.30},{name:"军市一",sha:261.11,dec:-17.96},
+    {name:"井宿三",sha:240.71,dec:16.40},{name:"五帝座一",sha:182.47,dec:14.57},
+    {name:"轩辕十二",sha:191.80,dec:19.84},{name:"房宿三",sha:106.71,dec:-22.62},
+    {name:"尾宿五",sha:96.49,dec:-37.10},{name:"天社一",sha:209.52,dec:-47.34},
+    {name:"十字架二",sha:173.31,dec:-63.10},{name:"十字架三",sha:149.53,dec:-59.69},
+    {name:"马腹一",sha:149.21,dec:-60.37},{name:"三角形三",sha:135.91,dec:-69.03},
+    {name:"鹤一",sha:331.95,dec:-46.96},{name:"天园六",sha:315.29,dec:-40.30}
+];
+
+const bgStarList = [
+    {name:"大角",sha:146.0833,dec:19.1833},{name:"织女",sha:80.6583,dec:38.7833},
+    {name:"五车二",sha:280.8208,dec:45.9833},{name:"北河二",sha:246.4042,dec:31.8833},
+    {name:"北河三",sha:243.7542,dec:28.0333},{name:"天津四",sha:49.6208,dec:45.2833},
+    {name:"室宿一",sha:14.0792,dec:29.0833},{name:"娄宿三",sha:33.5208,dec:23.4833},
+    {name:"天枢",sha:194.2875,dec:61.7500},{name:"玉衡",sha:208.2125,dec:58.9833},
+    {name:"摇光",sha:221.9958,dec:49.3167},{name:"贯索四",sha:235.7917,dec:26.6833},
+    {name:"毕宿五",sha:291.0125,dec:16.5000},{name:"宗人四",sha:265.5292,dec:12.5833},
+    {name:"天棓四",sha:270.2708,dec:51.4833},{name:"七公七",sha:252.7292,dec:27.9833},
+    {name:"策",sha:11.8542,dec:44.4167},{name:"王良四",sha:6.7292,dec:56.5333},
+    {name:"上卫增一",sha:256.9792,dec:49.4833},{name:"河鼓二",sha:62.304,dec:8.868}
+];
+
+const altSampleTable = [
+    { alt: 90, points: [{ dx: 0, dy: 0 }] },
+    { alt: 80, points: [
+{dx:0.0, dy:122.0},{dx:18.9, dy:129.7},{dx:29.0, dy:144.5},{dx:22.0, dy:164.0},{dx:-2.1, dy:170.1},{dx:-19.1, dy:167.1},{dx:-29.0, dy:144.0},{dx:-20.0, dy:128.0},
+    ] },
+  { alt: 70, points: [
+{dx:-1.1, dy:99.6},{dx:35.9, dy:109.4},{dx:55.9, dy:140.6},{dx:46.9, dy:177.0},{dx:-3.1, dy:194.0},{dx:-47.8, dy:176.8},{dx:-58.0, dy:138.2},{dx:-38.0, dy:109.2},
+] },
+     { alt: 60, points: [
+{dx:-2.1, dy:74.4},{dx:47.9, dy:83.6},{dx:85.9, dy:131.4},{dx:72.9, dy:189.0},{dx:-3.1, dy:220.0},{dx:-75.1, dy:189.0},{dx:-88.1, dy:130.3},{dx:-60.1, dy:89.4},
+ ] },
+    { alt: 50, points: [
+{dx:-3.1, dy:50.1},{dx:66.9, dy:64.3},{dx:114.9, dy:118.7},{dx:99.9, dy:198.0},{dx:-2.1, dy:244.0},{dx:-103.1, dy:198.0},{dx:-116.1, dy:117.4},{dx:-69.1, dy:64.4},
+ ] },
+    { alt: 40, points: [
+{dx:-4.1, dy:23.4},{dx:80.9, dy:41.4},{dx:142.9, dy:102.7},{dx:130.9, dy:203.0},{dx:-4.1, dy:268.0},{dx:-102.1, dy:198.0},{dx:-145.1, dy:102.4},{dx:-83.1, dy:42.3},
+ ] },
+{ alt: 30, points: [
+    {dx:-3.1, dy:-1.7},{dx:90.9, dy:16.4},{dx:167.9, dy:82.6},{dx:164.9, dy:202.0},{dx:-3.1, dy:295.0},{dx:-169.1, dy:198.0},{dx:-168.1, dy:80.3},{dx:-96.1, dy:18.3},
+ ] },
+     { alt: 20, points: [
+    {dx:-3.1, dy:-25.6},{dx:99.9, dy:-7.6},{dx:188.9, dy:59.4},{dx:203.9, dy:192.0},{dx:-3.1, dy:320.0},{dx:-205.1, dy:188.0},{dx:-191.1, dy:57.4},{dx:-104.1, dy:-6.7},
+ ] },
+{ alt: 10, points: [
+    {dx:-3.0, dy:-49.7},{dx:109.0, dy:-32.6},{dx:209.0, dy:32.3},{dx:242.0, dy:173.0},{dx:-3.0, dy:344.0},{dx:-245.1, dy:167.0},{dx:-208.1, dy:32.4},{dx:-111.1, dy:-31.9},
+ ] },
+    { alt: 0, points: [
+  {dx:-2.0, dy:-74.4},{dx:56.0, dy:-70.4},{dx:116.0, dy:-57.4},{dx:175.0, dy:-33.4},{dx:225.3, dy:5.7},{dx:265.4, dy:56.9},{dx:281.4, dy:144.3},{dx:219.0, dy:279.0},
+  {dx:-3.0, dy:367.3},{dx:-151.0, dy:361.3},{dx:-282.0, dy:144.3},{dx:-262.0, dy:54.6},{dx:-226.0, dy:4.9},{dx:-176.0, dy:-32.9},{dx:-119.0, dy:-57.0},{dx:-59.0, dy:-71.0},
+    ] }
+];
+
+const deg2rad = d => d*Math.PI/180;
+const rad2deg = r => r*180/Math.PI;
+
+function projectNorth(shaDeg, decDeg){
+    const rhoDeg = 90.0 - decDeg;
+    const rhoNorm = rhoDeg / 90.0;
+    const angleRad = deg2rad(shaDeg + PROJ_SHIFT);
+    const r = BG_MAX_R * Math.pow(rhoNorm, PROJ_K);
+    return {x: r*Math.sin(angleRad), y: -r*Math.cos(angleRad)};
+}
+
+function pointInHorizonEllipse(dx, dy){
+    const hp = altSampleTable.find(it=>it.alt===0).points;
+    if(!hp || hp.length < 3) return true;
+    let inside = false;
+    for (let i = 0, j = hp.length - 1; i < hp.length; j = i++) {
+        const xi = hp[i].dx, yi = hp[i].dy;
+        const xj = hp[j].dx, yj = hp[j].dy;
+        const intersect = ((yi > dy) !== (yj > dy))
+            && (dx < (xj - xi) * (dy - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+function lookupAlt(dxMouse, dyMouse){
+    const ZENITH_RADIUS_PX = 15;
+    const AZ_TOLERANCE = 30;
+    const rToZenith = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
+    if(rToZenith <= ZENITH_RADIUS_PX) return 90;
+    const azMouse = (Math.atan2(dxMouse, -dyMouse)*180/Math.PI + 360) % 360;
+    let minDist = Infinity, bestAlt = null, hasSample = false;
+    for(const entry of altSampleTable){
+        if(entry.alt === 90) continue;
+        for(const p of entry.points){
+            const azP = (Math.atan2(p.dx, -p.dy)*180/Math.PI + 360) % 360;
+            let dAz = Math.abs(azMouse - azP);
+            if(dAz > 180) dAz = 360 - dAz;
+            if(dAz > AZ_TOLERANCE) continue;
+            hasSample = true;
+            const ddx = dxMouse - p.dx, ddy = dyMouse - p.dy;
+            const dist = Math.sqrt(ddx*ddx + ddy*ddy);
+            if(dist < minDist){ minDist = dist; bestAlt = entry.alt; }
+        }
+    }
+    return hasSample ? bestAlt : null;
+}
+
+// ========== 太阳 + 行星 + 月亮 ==========
+function calcSpecialBodies(JD){
+    try{
+        const d = JD - 2451543.5;
+        const rad = Math.PI / 180;
+        const oblecl = 23.4393 - 3.563e-7 * d;
+
+        function earthHelio(d){
+            const w = 282.9404 + 4.70935e-5 * d;
+            const a = 1.0;
+            const e = 0.016709 - 1.151e-9 * d;
+            const M = ((356.0470 + 0.9856002585 * d) % 360 + 360) % 360;
+            const Mrad = M * rad;
+            let E = Mrad + e*Math.sin(Mrad)*(1+e*Math.cos(Mrad));
+            for(let k=0;k<6;k++){
+                const dE = (E - e*Math.sin(E) - Mrad)/(1 - e*Math.cos(E));
+                E -= dE;
+                if(Math.abs(dE) < 1e-10) break;
+            }
+            const xv = a*(Math.cos(E)-e);
+            const yv = a*Math.sqrt(1-e*e)*Math.sin(E);
+            const v = Math.atan2(yv,xv);
+            const r = Math.sqrt(xv*xv+yv*yv);
+            const wRad = w*rad;
+            return {
+                x: r*(Math.cos(wRad)*Math.cos(v)-Math.sin(wRad)*Math.sin(v)),
+                y: r*(Math.sin(wRad)*Math.cos(v)+Math.cos(wRad)*Math.sin(v)),
+                z: 0
+            };
+        }
+        function planetHelio(d, P){
+            const N=P.N+P.dN*d, i=P.i+P.di*d, w=P.w+P.dw*d, a=P.a+P.da*d, e=P.e+P.de*d;
+            const M = ((P.M + P.dM*d) % 360 + 360) % 360;
+            const Nrad=N*rad,irad=i*rad,wrad=w*rad,Mrad=M*rad;
+            let E = Mrad + e*Math.sin(Mrad)*(1+e*Math.cos(Mrad));
+            for(let k=0;k<10;k++){
+                const dE = (E - e*Math.sin(E) - Mrad)/(1 - e*Math.cos(E));
+                E -= dE;
+                if(Math.abs(dE) < 1e-10) break;
+            }
+            const xv = a*(Math.cos(E)-e);
+            const yv = a*Math.sqrt(1-e*e)*Math.sin(E);
+            const v = Math.atan2(yv,xv);
+            const r = Math.sqrt(xv*xv+yv*yv);
+            return {
+                x: r*(Math.cos(Nrad)*Math.cos(v+wrad) - Math.sin(Nrad)*Math.sin(v+wrad)*Math.cos(irad)),
+                y: r*(Math.sin(Nrad)*Math.cos(v+wrad) + Math.cos(Nrad)*Math.sin(v+wrad)*Math.cos(irad)),
+                z: r*(Math.sin(v+wrad)*Math.sin(irad))
+            };
+        }
+        function ecl2eq(x,y,z){
+            const obl = oblecl*rad;
+            const xe=x, ye=y*Math.cos(obl)-z*Math.sin(obl), ze=y*Math.sin(obl)+z*Math.cos(obl);
+            return {
+                ra: ((Math.atan2(ye,xe)/rad)%360+360)%360,
+                dec: Math.atan2(ze, Math.sqrt(xe*xe+ye*ye))/rad
+            };
+        }
+
+        const earth = earthHelio(d);
+        const sunEq = ecl2eq(-earth.x, -earth.y, 0);
+        const elems = {
+            "金星":{N:76.6799,dN:2.46590e-5,i:3.3946,di:2.75e-8,w:54.8910,dw:1.38374e-5,a:0.723330,da:0,e:0.006773,de:-1.302e-9,M:48.0052,dM:1.60213034},
+            "火星":{N:49.5574,dN:2.11081e-5,i:1.8497,di:-1.78e-8,w:286.5016,dw:2.92961e-5,a:1.523688,da:0,e:0.093405,de:2.516e-9,M:18.6021,dM:0.52402068},
+            "木星":{N:100.4542,dN:2.76854e-5,i:1.3030,di:-1.557e-7,w:273.8777,dw:1.64505e-5,a:5.20256,da:0,e:0.048498,de:4.469e-9,M:19.8950,dM:0.08308529},
+            "土星":{N:113.6634,dN:2.38980e-5,i:2.4886,di:-1.081e-7,w:339.3939,dw:2.97661e-5,a:9.55475,da:0,e:0.055546,de:-9.499e-9,M:316.9670,dM:0.03344414}
+        };
+        const result = {"太阳":{sha:(360-sunEq.ra)%360, dec:sunEq.dec, cls:"special-sun"}};
+        const clsMap = {"金星":"special-venus","火星":"special-mars","木星":"special-jupiter","土星":"special-saturn"};
+        for(const name in elems){
+            const p = planetHelio(d, elems[name]);
+            const geo = {x:p.x-earth.x, y:p.y-earth.y, z:p.z-earth.z};
+            const eq = ecl2eq(geo.x, geo.y, geo.z);
+            result[name] = {sha:(360-eq.ra)%360, dec:eq.dec, cls:clsMap[name]};
+        }
+
+        // ★ 月亮（Schlyter 简化星历 + 主要摄动项）
+        (function calcMoon(){
+            const N = 125.1228 - 0.0529538083 * d;
+            const i = 5.1454;
+            const w = 318.0634 + 0.1643573223 * d;
+            const a = 60.2666;
+            const e = 0.054900;
+            const M = ((115.3654 + 13.0649929509 * d) % 360 + 360) % 360;
+
+            const Mrad = M * rad;
+            let E = Mrad + e*Math.sin(Mrad)*(1+e*Math.cos(Mrad));
+            for(let k=0;k<10;k++){
+                const dE = (E - e*Math.sin(E) - Mrad)/(1 - e*Math.cos(E));
+                E -= dE;
+                if(Math.abs(dE) < 1e-10) break;
+            }
+
+            const xv = a*(Math.cos(E)-e);
+            const yv = a*Math.sqrt(1-e*e)*Math.sin(E);
+            const v = Math.atan2(yv, xv);
+            const r = Math.sqrt(xv*xv+yv*yv);
+
+            const Nrad = N*rad, irad = i*rad, wrad = w*rad;
+            const xh = r*(Math.cos(Nrad)*Math.cos(v+wrad) - Math.sin(Nrad)*Math.sin(v+wrad)*Math.cos(irad));
+            const yh = r*(Math.sin(Nrad)*Math.cos(v+wrad) + Math.cos(Nrad)*Math.sin(v+wrad)*Math.cos(irad));
+            const zh = r*(Math.sin(v+wrad)*Math.sin(irad));
+
+            let lon = Math.atan2(yh, xh) / rad;
+            let lat = Math.atan2(zh, Math.sqrt(xh*xh+yh*yh)) / rad;
+
+            // 太阳参数（用于摄动）
+            const ws = 282.9404 + 4.70935e-5 * d;
+            const Ms = ((356.0470 + 0.9856002585 * d) % 360 + 360) % 360;
+            const Ls = (ws + Ms) % 360;
+            const Lm = (N + w + M) % 360;
+            const D = (Lm - Ls + 360) % 360;
+            const F = (Lm - N + 360) % 360;
+
+            // 黄经摄动
+            lon += -1.274*Math.sin((M-2*D)*rad)
+                 +  0.658*Math.sin(2*D*rad)
+                 -  0.186*Math.sin(Ms*rad)
+                 -  0.059*Math.sin((2*M-2*D)*rad)
+                 -  0.057*Math.sin((M-2*D+Ms)*rad)
+                 +  0.053*Math.sin((M+2*D)*rad)
+                 +  0.046*Math.sin((2*D-Ms)*rad)
+                 +  0.041*Math.sin((M-Ms)*rad)
+                 -  0.035*Math.sin(D*rad)
+                 -  0.031*Math.sin((M+Ms)*rad)
+                 -  0.015*Math.sin((2*F-2*D)*rad)
+                 +  0.011*Math.sin((M-4*D)*rad);
+
+            // 黄纬摄动
+            lat += -0.173*Math.sin((F-2*D)*rad)
+                 -  0.055*Math.sin((M-F-2*D)*rad)
+                 -  0.046*Math.sin((M+F-2*D)*rad)
+                 +  0.033*Math.sin((F+2*D)*rad)
+                 +  0.017*Math.sin((2*M+F)*rad);
+
+            // 黄道 → 赤道
+            const lonRad = lon*rad, latRad = lat*rad;
+            const obl = oblecl*rad;
+            const xe = Math.cos(latRad)*Math.cos(lonRad);
+            const ye = Math.cos(latRad)*Math.sin(lonRad)*Math.cos(obl) - Math.sin(latRad)*Math.sin(obl);
+            const ze = Math.cos(latRad)*Math.sin(lonRad)*Math.sin(obl) + Math.sin(latRad)*Math.cos(obl);
+            const RA = ((Math.atan2(ye, xe)/rad) % 360 + 360) % 360;
+            const Dec = Math.atan2(ze, Math.sqrt(xe*xe+ye*ye)) / rad;
+
+            result["月亮"] = {sha:(360-RA)%360, dec:Dec, cls:"special-moon"};
+        })();
+
+        return result;
+    }catch(e){
+        console.error("特殊天体计算失败:", e);
+        return {};
+    }
+}
+
+// ========== 存储 ==========
+const OFFSET_KEY = "starfinder_offsets_v1";
+const SPECIAL_KEY = "starfinder_special_v1";
+function saveOffsets(){
+    try{
+        localStorage.setItem(OFFSET_KEY, JSON.stringify(STAR_OFFSETS));
+        localStorage.setItem(SPECIAL_KEY, JSON.stringify(SPECIAL_OFFSETS));
+    }catch(e){}
+}
+function loadOffsets(){
+    try{const s=localStorage.getItem(OFFSET_KEY);if(s)STAR_OFFSETS=JSON.parse(s);}catch(e){STAR_OFFSETS={};}
+    try{const s=localStorage.getItem(SPECIAL_KEY);if(s)SPECIAL_OFFSETS=JSON.parse(s);}catch(e){SPECIAL_OFFSETS={};}
+}
+function updateAlignedCount(){
+    alignedCount.innerText = `已对齐：${Object.keys(STAR_OFFSETS).length} / ${navStarList.length}`;
+}
+
+// ========== 渲染 ==========
+function renderBgStars(){
+    bgStarLayer.innerHTML = "";
+    if(!chkShowBgStar.checked) return;
+    for(const s of bgStarList){
+        const p = projectNorth(s.sha, s.dec);
+        const px = HALF_X + offsetCx + p.x;
+        const py = HALF_Y + offsetCy + p.y;
+        const dot = document.createElement("div");
+        dot.className = "bg-star-dot";
+        dot.style.left = px+"px"; dot.style.top = py+"px";
+        bgStarLayer.appendChild(dot);
+        const label = document.createElement("div");
+        label.className = "bg-star-label";
+        label.style.left = (px+8)+"px"; label.style.top = (py-5)+"px";
+        label.innerText = s.name;
+        bgStarLayer.appendChild(label);
+    }
+}
+
+// ★ calcAltAz：带 add180 参数（太阳和月亮用 true）
+function calcAltAz(latDeg, decDeg, LHAdeg, add180){
+    const lat = deg2rad(latDeg), dec = deg2rad(decDeg), LHA = deg2rad(LHAdeg);
+    const sinAlt = Math.sin(lat)*Math.sin(dec) + Math.cos(lat)*Math.cos(dec)*Math.cos(LHA);
+    const alt = Math.asin(Math.max(-1, Math.min(1, sinAlt)));
+    const cosAz = (Math.sin(dec) - Math.sin(lat)*sinAlt) / (Math.cos(lat)*Math.cos(alt));
+    let az = Math.acos(Math.max(-1, Math.min(1, cosAz)));
+    if(Math.sin(LHA) > 0) az = 2*Math.PI - az;
+
+    let azDeg = rad2deg(az);
+    if(add180) azDeg = (azDeg + 180) % 360;
+
+    return {alt:rad2deg(alt), az:azDeg};
+}
+
+function renderBody(star, offset, isSpecial){
+    try{
+      const LHA_gamma = rotateDeg;
+let starLHA = ((LHA_gamma + star.sha) + 360) % 360;
+
+// ★ 太阳的 LHA 加 180°（而不是修正方位角）
+if (star.name === "太阳") starLHA = (starLHA + 180) % 360;
+
+const res = calcAltAz(OBS_LAT, star.dec, starLHA);
+
+        const showBelow = chkShowBelow.checked;
+        if(!isSpecial && res.alt < 0 && !showBelow) return;
+
+        const p = projectNorth(star.sha, star.dec);
+        const px = HALF_X + offsetCx + p.x + offset.dx;
+        const py = HALF_Y + offsetCy + p.y + offset.dy;
+        const isAligned = (offset.dx !== 0 || offset.dy !== 0);
+
+        if(!isSpecial && !showBelow){
+            const dxRel = px - PANEL_CX;
+            const dyRel = py - PANEL_CY;
+            const rad = -rotateDeg * Math.PI / 180.0;
+            const cosA = Math.cos(rad), sinA = Math.sin(rad);
+            const dxu = dxRel * cosA - dyRel * sinA;
+            const dyu = dxRel * sinA + dyRel * cosA;
+            if(!pointInHorizonEllipse(dxu, dyu)) return;
+        }
+
+        let cls = "navstar-dot";
+        if(isSpecial) cls += " " + star.cls;
+        if(isAligned) cls += " aligned";
+
+        const dot = document.createElement("div");
+        dot.className = cls;
+        dot.style.left = px + "px";
+        dot.style.top  = py + "px";
+        if(res.alt < 0) dot.style.opacity = "0.4";
+
+        const tip = document.createElement("div");
+        tip.className = "navstar-tooltip";
+        const belowTag = res.alt < 0 ? "（地平线下）" : "";
+        tip.innerText = `${star.name}${belowTag}  Alt:${res.alt.toFixed(1)}°  Az:${res.az.toFixed(1)}°`;
+        tip.style.left = (px + 12) + "px";
+        tip.style.top  = (py + 8) + "px";
+        dot.appendChild(tip);
+        dot.addEventListener("mouseenter", ()=>{tip.style.display="block";});
+        dot.addEventListener("mouseleave", ()=>{tip.style.display="none";});
+
+        setupDragAndClick(dot, star, res, isSpecial);
+        navStarLayer.appendChild(dot);
+
+        if(chkShowStarName.checked){
+            const label = document.createElement("div");
+            let lc = "navstar-label";
+            if(isSpecial) lc += " " + star.cls;
+            if(isAligned) lc += " aligned";
+            label.className = lc;
+            label.style.left = (px + 9) + "px";
+            label.style.top  = (py - 16) + "px";
+            label.innerText = star.name;
+            if(res.alt < 0) label.style.opacity = "0.5";
+            navStarLayer.appendChild(label);
+        }
+    }catch(e){
+        console.error("渲染天体失败:", star.name, e);
+    }
+}
+
+function renderNavStars(){
+    navStarLayer.innerHTML = "";
+
+    if(chkShowNavStar.checked){
+        for(let star of navStarList){
+            const offset = STAR_OFFSETS[star.sha.toString()] || {dx:0, dy:0};
+            renderBody(star, offset, false);
+        }
+    }
+
+    if(chkShowSpecial.checked || chkShowMoon.checked){
+        try{
+            const utcTotalHour = (Number($("inpHr").value) + Number($("inpMin").value)/60.0) + Number($("inpTZ").value);
+            const JD = getJD(Number($("inpYear").value), Number($("inpMon").value), Number($("inpDay").value), utcTotalHour);
+            SPECIAL_BODIES = calcSpecialBodies(JD);
+            for(const name in SPECIAL_BODIES){
+                // 月亮由 chkShowMoon 控制，其它由 chkShowSpecial 控制
+                if(name === "月亮" && !chkShowMoon.checked) continue;
+                if(name !== "月亮" && !chkShowSpecial.checked) continue;
+
+                const body = SPECIAL_BODIES[name];
+                const offset = SPECIAL_OFFSETS[name] || {dx:0, dy:0};
+                renderBody({name, sha:body.sha, dec:body.dec, cls:body.cls}, offset, true);
+            }
+        }catch(e){ console.error("特殊天体渲染失败:", e); }
+    }
+
+    updateAlignedCount();
+}
+
+function setupDragAndClick(dot, star, res, isSpecial){
+    let isDown=false, hasMoved=false, startMX=0, startMY=0, startL=0, startT=0;
+    function getMouse(e){const t=e.touches?e.touches[0]:e;return {x:t.clientX,y:t.clientY};}
+    function onDown(e){
+        e.stopPropagation(); e.preventDefault();
+        isDown=true; hasMoved=false;
+        const m=getMouse(e), r=canvasWrap.getBoundingClientRect();
+        startMX=m.x-r.left; startMY=m.y-r.top;
+        startL=parseFloat(dot.style.left); startT=parseFloat(dot.style.top);
+        dot.style.zIndex=100;
+    }
+    function onMove(e){
+        if(!isDown) return;
+        const m=getMouse(e), r=canvasWrap.getBoundingClientRect();
+        const dx=(m.x-r.left)-startMX, dy=(m.y-r.top)-startMY;
+        if(!hasMoved && (Math.abs(dx)>3||Math.abs(dy)>3)){
+            hasMoved=true;
+            dragToast.innerText=`正在拖动：${star.name}`;
+            dragToast.classList.add("show");
+        }
+        if(hasMoved){
+            dot.style.left=(startL+dx)+"px";
+            dot.style.top =(startT+dy)+"px";
+        }
+    }
+    function onUp(){
+        if(!isDown) return;
+        isDown=false; dot.style.zIndex="";
+        if(hasMoved){
+            dragToast.classList.remove("show");
+            const fL=parseFloat(dot.style.left), fT=parseFloat(dot.style.top);
+            const p=projectNorth(star.sha, star.dec);
+            const basePx=HALF_X+offsetCx+p.x, basePy=HALF_Y+offsetCy+p.y;
+            const dx=fL-basePx, dy=fT-basePy;
+            if(isSpecial){
+                if(Math.abs(dx)<2&&Math.abs(dy)<2) delete SPECIAL_OFFSETS[star.name];
+                else SPECIAL_OFFSETS[star.name]={dx,dy};
+            } else {
+                if(Math.abs(dx)<2&&Math.abs(dy)<2) delete STAR_OFFSETS[star.sha.toString()];
+                else STAR_OFFSETS[star.sha.toString()]={dx,dy};
+            }
+            saveOffsets();
+            renderNavStars();
+        } else {
+            lockReading=true;
+            lockedStarName=star.name;
+            lockStarName.innerText=`【${star.name}】`;
+            azLock.innerText=res.az.toFixed(1);
+            altLock.innerText=res.alt.toFixed(1);
+            const tag=isSpecial?"（天体）":"（恒星）";
+            const below = res.alt<0?"  地平线下":"";
+            showClickToast(`已锁定${tag}【${star.name}】${below}\nSHA:${star.sha.toFixed(2)}° Dec:${star.dec.toFixed(2)}°\nAz:${res.az.toFixed(1)}° Alt:${res.alt.toFixed(1)}°`);
+        }
+    }
+    dot.addEventListener("mousedown",onDown);
+    document.addEventListener("mousemove",onMove);
+    document.addEventListener("mouseup",onUp);
+    dot.addEventListener("touchstart",onDown,{passive:false});
+    document.addEventListener("touchmove",onMove,{passive:false});
+    document.addEventListener("touchend",onUp);
+}
+
+function showClickToast(msg){
+    clickToast.innerText=msg;
+    clickToast.classList.add("show");
+    setTimeout(()=>clickToast.classList.remove("show"),2500);
+}
+
+function applyTransform(anim){
+    if(anim === undefined) anim = true;
+    panelImgDom.style.transformOrigin = PANEL_CX + "px " + PANEL_CY + "px";
+    panelImgDom.style.transition = anim ? "transform 0.8s ease-out" : "none";
+    panelImgDom.style.transform = "rotate(" + rotateDeg + "deg)";
+    const normDeg = ((rotateDeg % 360) + 360) % 360;
+    rotateInput.value = normDeg.toFixed(1);
+    renderNavStars();
+}
+
+function updateRotateImmediate(val){ if(isNaN(val)) val=0; rotateDeg=val; applyTransform(false); }
+function smoothRotateTo(t){ rotateDeg=t; applyTransform(true); }
+
+$("setRotateBtn").addEventListener("click",()=>updateRotateImmediate(parseFloat(rotateInput.value)));
+btnZeroAz.addEventListener("click",()=>smoothRotateTo(0));
+
+document.addEventListener("keydown",ev=>{
+    if(ev.target.tagName==="INPUT") return;
+    if(ev.key==="ArrowLeft") updateRotateImmediate(rotateDeg-1);
+    else if(ev.key==="ArrowRight") updateRotateImmediate(rotateDeg+1);
+});
+
+chkShowNavStar.addEventListener("change", renderNavStars);
+chkShowBgStar.addEventListener("change", renderBgStars);
+chkShowStarName.addEventListener("change", renderNavStars);
+chkShowSpecial.addEventListener("change", renderNavStars);
+chkShowMoon.addEventListener("change", renderNavStars);
+chkShowBelow.addEventListener("change", renderNavStars);
+
+["inpYear","inpMon","inpDay","inpHr","inpMin","inpTZ"].forEach(id=>{
+    $(id).addEventListener("change", renderNavStars);
+});
+
+inpProjK.addEventListener("input",()=>{PROJ_K=parseFloat(inpProjK.value)||1;projKRead.innerText=PROJ_K.toFixed(2);renderBgStars();applyTransform(false);});
+rngProjK.addEventListener("input",()=>{PROJ_K=parseFloat(rngProjK.value)||1;inpProjK.value=PROJ_K.toFixed(2);projKRead.innerText=PROJ_K.toFixed(2);renderBgStars();applyTransform(false);});
+btnResetK.addEventListener("click",()=>{inpProjK.value=1.0;PROJ_K=1.0;projKRead.innerText="1.00";renderBgStars();applyTransform(false);});
+
+inpProjShift.addEventListener("input",()=>{PROJ_SHIFT=parseFloat(inpProjShift.value)||0;rngProjShift.value=PROJ_SHIFT;projShiftRead.innerText=PROJ_SHIFT+"°";renderBgStars();applyTransform(false);});
+rngProjShift.addEventListener("input",()=>{PROJ_SHIFT=parseFloat(rngProjShift.value)||0;inpProjShift.value=PROJ_SHIFT;projShiftRead.innerText=PROJ_SHIFT+"°";renderBgStars();applyTransform(false);});
+btnResetShift.addEventListener("click",()=>{inpProjShift.value=0;PROJ_SHIFT=0;projShiftRead.innerText="0°";renderBgStars();applyTransform(false);});
+btnSetShift180.addEventListener("click",()=>{inpProjShift.value=180;PROJ_SHIFT=180;projShiftRead.innerText="180°";renderBgStars();applyTransform(false);});
+
+inpObsLon.addEventListener("change",()=>{
+    const v=parseFloat(inpObsLon.value);
+    if(!isNaN(v)&&v>=-180&&v<=180){
+        const absLon=Math.min(180,Math.abs(v));
+        let zone=Math.floor(absLon/15);
+        if(absLon-zone*15>=7.5) zone+=1;
+        if(zone>12) zone=12;
+        inpTZ.value = (v>=0?-zone:zone);
+    }
+});
+btnApplyLon.addEventListener("click",()=>{
+    const v=parseFloat(inpObsLon.value);
+    if(!isNaN(v)&&v>=-180&&v<=180){OBS_LON=v; renderNavStars();}
+});
+btnApplyLat.addEventListener("click",()=>{
+    const v=parseFloat(inpObsLat.value);
+    if(!isNaN(v)){OBS_LAT=v; renderNavStars();}
+});
+
+btnApplyCal.addEventListener("click",()=>{
+    HALF_X=parseFloat(inpCenterX.value)||560;
+    HALF_Y=parseFloat(inpCenterY.value)||480;
+    BG_MAX_R=parseFloat(inpProjR.value)||393;
+    renderBgStars();
+    applyTransform(false);
+});
+
+canvasWrap.addEventListener("mousemove",e=>{
+    const rect=canvasWrap.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    crossCursor.style.left=mx+"px"; crossCursor.style.top=my+"px";
+    if(lockReading) return;
+    const dxm=mx-PANEL_CX, dym=my-PANEL_CY;
+    const rad=-rotateDeg*Math.PI/180.0;
+    const cosA=Math.cos(rad), sinA=Math.sin(rad);
+    const dxu=dxm*cosA-dym*sinA;
+    const dyu=dxm*sinA+dym*cosA;
+    const az=(Math.atan2(dxu,-dyu)*180/Math.PI+360)%360;
+    azRead.innerText=az.toFixed(1);
+    const alt=lookupAlt(dxu,dyu);
+    if(alt===null) altRead.innerText="---";
+    else altRead.innerText=alt.toFixed(0);
+});
+
+canvasWrap.addEventListener("click",e=>{
+    if(e.target.classList.contains("navstar-dot")) return;
+    lockReading=true;
+    lockedStarName="";
+    lockStarName.innerText="";
+    azLock.innerText="--";
+    altLock.innerText="--";
+});
+
+clearLockBtn.addEventListener("click",()=>{
+    lockReading=false; lockedStarName="";
+    azLock.innerText="--"; altLock.innerText="--"; lockStarName.innerText="";
+});
+
+btnClearOffsets.addEventListener("click",()=>{
+    if(confirm("确定要清除所有已保存的对齐偏移吗？（含太阳行星月亮）")){
+        STAR_OFFSETS={}; SPECIAL_OFFSETS={};
+        saveOffsets(); renderNavStars();
+    }
+});
+
+btnExportOffsets.addEventListener("click",()=>{
+    const data={stars:STAR_OFFSETS, specials:SPECIAL_OFFSETS};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download="starfinder_offsets.json"; a.click();
+});
+
+btnImportOffsets.addEventListener("click",()=>{
+    const input=document.createElement("input");
+    input.type="file"; input.accept=".json";
+    input.onchange=ev=>{
+        const f=ev.target.files[0]; if(!f) return;
+        const r=new FileReader();
+        r.onload=()=>{
+            try{
+                const data=JSON.parse(r.result);
+                STAR_OFFSETS=data.stars||data;
+                SPECIAL_OFFSETS=data.specials||{};
+                saveOffsets(); renderNavStars();
+                alert("导入成功！");
+            }catch(e){alert("导入失败："+e.message);}
+        };
+        r.readAsText(f);
+    };
+    input.click();
+});
+
+function getJD(y,m,d,utHour){
+    let yy=y,mm=m;
+    if(mm<=2){yy--;mm+=12;}
+    const A=Math.floor(yy/100);
+    const B=2-A+Math.floor(A/4);
+    return Math.floor(365.25*(yy+4716))+Math.floor(30.6001*(mm+1))+d+B-1524.5+utHour/24.0;
+}
+function computeGHAgamma(y,m,d,utHour){
+    const jd=getJD(y,m,d,utHour);
+    const dDays=jd-2451545.0;
+    let gmstH=6.697374558+0.06570982441908*dDays+1.00273790935*utHour;
+    gmstH=((gmstH%24.0)+24.0)%24.0;
+    return gmstH*15.0;
+}
+btnSetByTime.addEventListener("click",()=>{
+    const year=Number($("inpYear").value), mon=Number($("inpMon").value), day=Number($("inpDay").value);
+    const locHr=Number($("inpHr").value), locMin=Number($("inpMin").value), tz=Number($("inpTZ").value);
+    const utcTotalHour=(locHr+locMin/60.0)+tz;
+    const GHAγ=computeGHAgamma(year,mon,day,utcTotalHour);
+    let LHA_gamma=(GHAγ+OBS_LON)%360;
+    if(LHA_gamma<0) LHA_gamma+=360;
+    smoothRotateTo(LHA_gamma);
+    alert(`自动调卡完成\nUTC = ${utcTotalHour.toFixed(2)}h\nGHAγ = ${GHAγ.toFixed(2)} °\nLHAγ = ${LHA_gamma.toFixed(2)} °`);
+});
+
+loadOffsets();
+renderBgStars();
+applyTransform(false);
+console.log("索星卡模拟器（含月亮）初始化完成");
+</script>
+</body>
+</html>
