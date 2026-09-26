@@ -136,9 +136,7 @@ input[type="file"].hide-file{display:none;}
             <label>区时 时:</label><input id="inpHr" type="number" value="20" min="0" max="23">
             <label>分:</label><input id="inpMin" type="number" value="0" min="0" max="59">
             <label>时区(东-西+):</label><input id="inpTZ" type="number" value="-8" step="0.5">
-          
- <button id="btnSetByTime" style="font-weight: bold; color: red;border-radius: 6px; background-color: #ffe0e0;">执行</button>
-
+            <button id="btnSetByTime">执行</button>
         </div>
         <div class="row">
             <label><input id="chkShowBgStar" type="checkbox">🟡底板北天星</label>
@@ -195,11 +193,11 @@ input[type="file"].hide-file{display:none;}
         </div>
     </div>
     <div class="star-wrap" id="canvasWrap">
-       <img id="baseImgDom" class="base-img" src="星基plate.png">
+        <img id="baseImgDom" class="base-img" src="Star base plate.png">
         <div class="bg-star-layer" id="bgStarLayer"></div>
         <div class="navstar-layer" id="navStarLayer"></div>
         <div id="panelWrap" class="panel-wrap">
-          <img id="panelImgDom" class="panel-img" src="星face-plate.png">
+            <img id="panelImgDom" class="panel-img" src="Star face-plate.png">
         </div>
         <div class="cross-cursor" id="crossCursor">
             <div class="cross-h"></div>
@@ -210,7 +208,7 @@ input[type="file"].hide-file{display:none;}
         <div class="row">
             <div class="readout-box">方位角Az：<span id="azRead">---</span> °</div>
             <div class="readout-box">高度角Alt：<span id="altRead">---</span> °</div>
-            <div class="readout-box">【锁定】<span id="lockStarName"></span> 计算方位:<span id="azLock">--</span> 计算高度:<span id="altLock">--</span></div>
+            <div class="readout-box">【锁定】<span id="lockStarName"></span> Az:<span id="azLock">--</span> Alt:<span id="altLock">--</span></div>
             <button id="clearLock">清除锁定</button>
         </div>
     </div>
@@ -218,30 +216,6 @@ input[type="file"].hide-file{display:none;}
 
 <div class="click-toast" id="clickToast"></div>
 <div class="drag-toast" id="dragToast"></div>
-
-  </div>
-<!--=====自定义底部说明文字区域，直接修改这里面的p标签内容即可=====-->
-    <div class="bottom-note">
-        <br>   
-<h4>使用举例   </h4>
-        <p>使用前：点击按钮导入索星卡底板和面板图片</p>
-              <p>电脑：如将图片与 HTML 放同一文件夹，打开即显示；手机：先将图片保存到相册，再点击导入。</p> 
-               <p>在手机上操作，可通过双指放大缩小，左右移动。</p>
-       <br>    
-        <p>1. 在位置输入框输入：纬度30N、经度120E （北+、南-），改变经纬度后，按旁边“应用”按钮。<p>
-        <p>2. 在时间输入框输入：2026年9月25日20点 <p>
-        <p>3. 按“执行”按钮</p>
-        <p>       蓝色椭圆圈会自动转到当地时刻的天空，显示椭圆内（及椭圆边缘附近）的天体。
-        <p>       点击某天体，下面会锁定该天体的名称、计算高度和方位。</p>
-        <p>       比如点击“月亮”，   显示：【月亮】   计算方位:121.4 计算高度:36.9。</p>
-        <p>       比如点击“北极星”   显示：【北极星】计算方位:0.8 计算高度:29.9。</p>
-       <p>        比如点击“太阳”，   显示：【太阳】   计算方位:346.3 计算高度:-55.9。（高度为负 表示天体在地平圈下面)</p>
-        <p>       面向北抬头观测：方位从北（0度)起，顺时针度量0~360度，高度从地平圈（0度)起到天顶90度。</p>
-        <h4>     注意：专业海上天文定位，输入位置和时间精确到“0.1分”。  要了解更多，请打开顶部的《使用说明》  </h4>        
-               
-
-</div>
-    <!--=====自定义底部说明结束=====-->
 
 <script>
 // ========== DOM ==========
