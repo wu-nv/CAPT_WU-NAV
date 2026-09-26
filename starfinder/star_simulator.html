@@ -40,7 +40,6 @@ button{padding:5px 10px;font-size:14px;cursor:pointer;}
 .navstar-dot.special-jupiter:hover{background:#ffb450;}
 .navstar-dot.special-saturn{background:rgba(200,220,90,0.7);border-color:#889922;box-shadow:0 0 6px rgba(200,220,90,0.8);}
 .navstar-dot.special-saturn:hover{background:#c8dc5a;}
-/* ★ 月亮样式（新加） */
 .navstar-dot.special-moon{background:rgba(220,220,255,0.8);border:2px solid #aac;width:16px;height:16px;margin-left:-8px;margin-top:-8px;box-shadow:0 0 10px rgba(200,200,255,0.9);}
 .navstar-dot.special-moon:hover{background:#e0e0ff;}
 .navstar-label{position:absolute;color:#c00;font-size:11px;font-weight:bold;pointer-events:none;white-space:nowrap;text-shadow:1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff;z-index:7;}
@@ -67,6 +66,10 @@ input[type="file"].hide-file{display:none;}
 .btn-advanced:hover{background:#444;}
 .below-chk{background:#e6f0ff;padding:4px 8px;border-radius:4px;border:1px solid #1890ff;}
 .moon-chk{background:#eef0ff;padding:4px 8px;border-radius:4px;border:1px solid #6688cc;}
+/* ★ 底部说明 */
+.bottom-note{margin:16px 0;padding:12px 16px;background:#fff;border-radius:8px;font-size:14px;line-height:1.7;color:#222;box-shadow:0 1px 4px #0002;}
+.bottom-note h4{margin:6px 0;}
+.bottom-note p{margin:4px 0;}
 </style>
 </head>
 <body>
@@ -193,11 +196,11 @@ input[type="file"].hide-file{display:none;}
         </div>
     </div>
     <div class="star-wrap" id="canvasWrap">
-        <img id="baseImgDom" class="base-img" src="Star base plate.png">
+        <img id="baseImgDom" class="base-img" src="base.png">
         <div class="bg-star-layer" id="bgStarLayer"></div>
         <div class="navstar-layer" id="navStarLayer"></div>
         <div id="panelWrap" class="panel-wrap">
-            <img id="panelImgDom" class="panel-img" src="Star face-plate.png">
+            <img id="panelImgDom" class="panel-img" src="panel.png">
         </div>
         <div class="cross-cursor" id="crossCursor">
             <div class="cross-h"></div>
@@ -212,34 +215,27 @@ input[type="file"].hide-file{display:none;}
             <button id="clearLock">清除锁定</button>
         </div>
     </div>
+    <!--=====自定义底部说明文字区域，直接修改这里面的p标签内容即可=====-->
+    <div class="bottom-note">
+        <h4>使用举例</h4>
+        <p>使用前：点击按钮导入索星卡底板和面板图片。</p>
+        <p>电脑：如将图片与 HTML 放同一文件夹，打开即显示；手机：先将图片保存到相册，再点击导入。</p>
+        <p>在手机上操作，可通过双指放大缩小，左右移动。</p>
+        <p>1. 在位置输入框输入：纬度 30N、经度 120E（北 +、南 −），改变经纬度后，按旁边"应用"按钮。</p>
+        <p>2. 在时间输入框输入：2026 年 9 月 25 日 20 点。</p>
+        <p>3. 按"执行"按钮。</p>
+        <p>蓝色椭圆圈会自动转到当地时刻的天空，显示椭圆内（及椭圆边缘附近）的天体。点击某天体，下面会锁定该天体的名称、计算高度和方位。</p>
+        <p>比如点击"月亮"，显示：【月亮】计算方位:121.4 计算高度:36.9。</p>
+        <p>比如点击"北极星"，显示：【北极星】计算方位:0.8 计算高度:29.9。</p>
+        <p>比如点击"太阳"，显示：【太阳】计算方位:346.3 计算高度:-55.9。（高度为负表示天体在地平圈下面）</p>
+        <p>面向北抬头观测：方位从北（0 度）起，顺时针度量 0~360 度，高度从地平圈（0 度）起到天顶 90 度。</p>
+        <h4>注意：专业海上天文定位，输入位置和时间精确到"0.1 分"。要了解更多，请打开顶部的《使用说明》。</h4>
+    </div>
+    <!--=====自定义底部说明结束=====-->
 </div>
 
 <div class="click-toast" id="clickToast"></div>
 <div class="drag-toast" id="dragToast"></div>
-
- </div>
-<!--=====自定义底部说明文字区域，直接修改这里面的p标签内容即可=====-->
-    <div class="bottom-note">
-        <br>   
-<h4>使用举例   </h4>
-        <p>使用前：点击按钮导入索星卡底板和面板图片</p>
-              <p>电脑：如将图片与 HTML 放同一文件夹，打开即显示；手机：先将图片保存到相册，再点击导入。</p> 
-               <p>在手机上操作，可通过双指放大缩小，左右移动。</p>
-       <br>    
-        <p>1. 在位置输入框输入：纬度30N、经度120E （北+、南-），改变经纬度后，按旁边“应用”按钮。<p>
-        <p>2. 在时间输入框输入：2026年9月25日20点 <p>
-        <p>3. 按“执行”按钮</p>
-        <p>       蓝色椭圆圈会自动转到当地时刻的天空，显示椭圆内（及椭圆边缘附近）的天体。
-        <p>       点击某天体，下面会锁定该天体的名称、计算高度和方位。</p>
-        <p>       比如点击“月亮”，   显示：【月亮】   计算方位:121.4 计算高度:36.9。</p>
-        <p>       比如点击“北极星”   显示：【北极星】计算方位:0.8 计算高度:29.9。</p>
-       <p>        比如点击“太阳”，   显示：【太阳】   计算方位:346.3 计算高度:-55.9。（高度为负 表示天体在地平圈下面)</p>
-        <p>       面向北抬头观测：方位从北（0度)起，顺时针度量0~360度，高度从地平圈（0度)起到天顶90度。</p>
-        <h4>     注意：专业海上天文定位，输入位置和时间精确到“0.1分”。  要了解更多，请打开顶部的《使用说明》  </h4>        
-               
-
-</div>
-    <!--=====自定义底部说明结束=====-->
 
 <script>
 // ========== DOM ==========
@@ -262,7 +258,7 @@ const azRead=$("azRead"),altRead=$("altRead");
 const clearLockBtn=$("clearLock"),crossCursor=$("crossCursor");
 const azLock=$("azLock"),altLock=$("altLock"),lockStarName=$("lockStarName");
 const chkShowNavStar=$("chkShowNavStar"),chkShowStarName=$("chkShowStarName"),chkShowSpecial=$("chkShowSpecial");
-const chkShowMoon=$("chkShowMoon");   // ★ 月亮
+const chkShowMoon=$("chkShowMoon");
 const chkShowBelow=$("chkShowBelow");
 const navStarLayer=$("navStarLayer");
 const inpObsLat=$("inpObsLat"),btnApplyLat=$("btnApplyLat");
@@ -502,7 +498,6 @@ function calcSpecialBodies(JD){
             result[name] = {sha:(360-eq.ra)%360, dec:eq.dec, cls:clsMap[name]};
         }
 
-        // ★ 月亮（Schlyter 简化星历 + 主要摄动项）
         (function calcMoon(){
             const N = 125.1228 - 0.0529538083 * d;
             const i = 5.1454;
@@ -532,7 +527,6 @@ function calcSpecialBodies(JD){
             let lon = Math.atan2(yh, xh) / rad;
             let lat = Math.atan2(zh, Math.sqrt(xh*xh+yh*yh)) / rad;
 
-            // 太阳参数（用于摄动）
             const ws = 282.9404 + 4.70935e-5 * d;
             const Ms = ((356.0470 + 0.9856002585 * d) % 360 + 360) % 360;
             const Ls = (ws + Ms) % 360;
@@ -540,7 +534,6 @@ function calcSpecialBodies(JD){
             const D = (Lm - Ls + 360) % 360;
             const F = (Lm - N + 360) % 360;
 
-            // 黄经摄动
             lon += -1.274*Math.sin((M-2*D)*rad)
                  +  0.658*Math.sin(2*D*rad)
                  -  0.186*Math.sin(Ms*rad)
@@ -554,14 +547,12 @@ function calcSpecialBodies(JD){
                  -  0.015*Math.sin((2*F-2*D)*rad)
                  +  0.011*Math.sin((M-4*D)*rad);
 
-            // 黄纬摄动
             lat += -0.173*Math.sin((F-2*D)*rad)
                  -  0.055*Math.sin((M-F-2*D)*rad)
                  -  0.046*Math.sin((M+F-2*D)*rad)
                  +  0.033*Math.sin((F+2*D)*rad)
                  +  0.017*Math.sin((2*M+F)*rad);
 
-            // 黄道 → 赤道
             const lonRad = lon*rad, latRad = lat*rad;
             const obl = oblecl*rad;
             const xe = Math.cos(latRad)*Math.cos(lonRad);
@@ -617,30 +608,25 @@ function renderBgStars(){
     }
 }
 
-// ★ calcAltAz：带 add180 参数（太阳和月亮用 true）
-function calcAltAz(latDeg, decDeg, LHAdeg, add180){
+function calcAltAz(latDeg, decDeg, LHAdeg){
     const lat = deg2rad(latDeg), dec = deg2rad(decDeg), LHA = deg2rad(LHAdeg);
     const sinAlt = Math.sin(lat)*Math.sin(dec) + Math.cos(lat)*Math.cos(dec)*Math.cos(LHA);
     const alt = Math.asin(Math.max(-1, Math.min(1, sinAlt)));
     const cosAz = (Math.sin(dec) - Math.sin(lat)*sinAlt) / (Math.cos(lat)*Math.cos(alt));
     let az = Math.acos(Math.max(-1, Math.min(1, cosAz)));
     if(Math.sin(LHA) > 0) az = 2*Math.PI - az;
-
-    let azDeg = rad2deg(az);
-    if(add180) azDeg = (azDeg + 180) % 360;
-
-    return {alt:rad2deg(alt), az:azDeg};
+    return {alt:rad2deg(alt), az:rad2deg(az)};
 }
 
 function renderBody(star, offset, isSpecial){
     try{
-      const LHA_gamma = rotateDeg;
-let starLHA = ((LHA_gamma + star.sha) + 360) % 360;
+        const LHA_gamma = rotateDeg;
+        let starLHA = ((LHA_gamma + star.sha) + 360) % 360;
 
-// ★ 太阳的 LHA 加 180°（而不是修正方位角）
-if (star.name === "太阳") starLHA = (starLHA + 180) % 360;
+        // 太阳的 LHA 加 180°
+        if (star.name === "太阳") starLHA = (starLHA + 180) % 360;
 
-const res = calcAltAz(OBS_LAT, star.dec, starLHA);
+        const res = calcAltAz(OBS_LAT, star.dec, starLHA);
 
         const showBelow = chkShowBelow.checked;
         if(!isSpecial && res.alt < 0 && !showBelow) return;
@@ -716,7 +702,6 @@ function renderNavStars(){
             const JD = getJD(Number($("inpYear").value), Number($("inpMon").value), Number($("inpDay").value), utcTotalHour);
             SPECIAL_BODIES = calcSpecialBodies(JD);
             for(const name in SPECIAL_BODIES){
-                // 月亮由 chkShowMoon 控制，其它由 chkShowSpecial 控制
                 if(name === "月亮" && !chkShowMoon.checked) continue;
                 if(name !== "月亮" && !chkShowSpecial.checked) continue;
 
