@@ -10,7 +10,8 @@
             background: #2b3e50;
             display: flex;
             justify-content: center;
-            align-items: center;
+            /* ★修改①（手机端适配）：去掉 align-items:center，改用子元素 margin:auto 居中——
+               内容超过一屏时顶部不会被裁掉，手机上可以正常滚到最上面 */
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -26,6 +27,7 @@
             align-items: center;
             max-width: 100%;
             width: fit-content;
+            margin: auto; /* ★修改①：配合 body 的居中改动 */
         }
         .chart-title {
             font-size: 18px;
@@ -135,11 +137,13 @@
 
         canvas {
             display: block;
-            width: 19.6cm;
+            width: 100%;          /* ★修改①（手机端适配）：由固定 19.6cm 改为随屏幕宽度自适应 */
+            max-width: 19.6cm;    /* ★修改①：大屏上不超过原尺寸 */
             height: auto;
             border: 2px solid #222;
             background: #f0f8ff;
             cursor: crosshair;
+            touch-action: none;   /* ★新增①：手机上拖拽航点时不再误触发页面滚动 */
         }
 
         .control-panel {
@@ -203,6 +207,33 @@
             white-space: nowrap;
         }
 
+        /* ★新增②：航向"自动"小按钮样式 */
+        .control-panel .course-auto {
+            padding: 3px 10px;
+            background: #8aa2b8;
+            font-size: 12px;
+        }
+        .control-panel .course-auto:hover { background: #6d8aa3; }
+
+        /* ★新增③：可折叠"使用说明"样式 */
+        .help-box {
+            width: 100%;
+            background: #fffbe8;
+            border: 1px solid #e6d27a;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .help-box summary {
+            cursor: pointer;
+            padding: 6px 10px;
+            font-weight: 700;
+            color: #7a5c00;
+            user-select: none;
+        }
+        .help-box .help-content { padding: 2px 12px 10px; color: #4a3f1a; }
+        .help-box .help-content p { margin: 6px 0; line-height: 1.6; }
+
         @media print {
             canvas { width: 19.6cm; height: auto; }
             body { background: white; }
@@ -210,6 +241,9 @@
             .info-panel, .waypoint-settings, .control-panel { background: #f0f4f8; border-color: #999; }
         }
         @media (max-width: 600px) {
+            /* ★修改①（手机端适配）：小屏下压缩页面留白 */
+            body { padding: 8px; }
+            .chart-container { padding: 8px 6px 6px 6px; }
             .info-panel table { font-size: 11px; }
             .info-panel th, .info-panel td { padding: 2px 3px; }
             .waypoint-settings .wp-row { flex-direction: column; align-items: stretch; gap: 4px; }
@@ -224,22 +258,37 @@
 <div class="chart-container">
     <div class="chart-title">🧭 墨卡托海图 · 恒向线 vs 大圆航线</div>
 
+    <!-- ★新增③：可折叠"使用说明"按钮（点击标题行展开/收起） -->
+    <details class="help-box">
+        <summary>📖 使用说明（点击展开 / 收起）</summary>
+        <div class="help-content">
+            <!-- ★新增⑤：原理说明，加在使用说明开头 -->
+            <p><b>💡 原理：</b>球面上两点间的最短距离不是直线，而是大圆弧。恒向线“图上直、地上弯”，大圆航线“图上弯、地上最短”，故同速时大圆船航程短、先到达。</p>
+            <p><b>1. 设置航点</b>：在"起点/终点"区输入经纬度（度、分、方向），或直接在白色海图上<b>拖拽红点（起点）、绿点（终点）</b>。</p>
+            <p><b>2. 开始模拟</b>：点"▶ 启动"后，两艘船同时从起点驶向终点——金色船沿<b>大圆航线（GCR）</b>，红色船沿<b>恒向线（RLR）</b>；上方表格实时显示两者的位置、距离、航向和预计到达时间。</p>
+            <p><b>3. 航速</b>：输入 0~200 节，随时可调，两船同速。</p>
+            <p><b>4. 航向</b>：留空 = 自动（各自朝终点航行）；手动输入 0~359°后，两船改按你设定的固定方向直线航行，点"自动"按钮恢复。</p>
+            <p><b>5. 其他按钮</b>：⏹停止 / ↺返回起点 / 📍显示或隐藏航行轨迹。</p>
+            <p><b>6. 手机端</b>：页面已适配小屏，海图随屏幕宽度自动缩放。</p>
+        </div>
+    </details>
+
     <!-- ===== 信息表格 ===== -->
     <div class="info-panel">
         <table>
             <thead>
                 <tr>
                     <th style="min-width:60px;"></th>
-                    <th>Lat</th>
-                    <th>Long</th>
-                    <th>Dist</th>
-                    <th>Course</th>
-                    <th>Timego</th>
+                    <th>纬度</th>
+                    <th>经度</th>
+                    <th>距离</th>
+                    <th>航向</th>
+                    <th>剩余距离</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td class="row-label gcr-label">GCR:</td>
+                    <td class="row-label gcr-label">大圆GCR:</td>
                     <td class="data-cell" id="latB">--</td>
                     <td class="data-cell" id="lonB">--</td>
                     <td class="data-cell" id="distEndB">--</td>
@@ -247,7 +296,7 @@
                     <td class="data-cell" id="timeB">--</td>
                 </tr>
                 <tr>
-                    <td class="row-label rlr-label">RLR:</td>
+                    <td class="row-label rlr-label">恒向线RLR:</td>
                     <td class="data-cell" id="latA">--</td>
                     <td class="data-cell" id="lonA">--</td>
                     <td class="data-cell" id="distEndA">--</td>
@@ -264,7 +313,8 @@
             <span class="wp-label start-label">🟥 起点</span>
             <span class="coord-group">
                 <span>纬度</span>
-                <input type="number" id="startLatDeg" value="30" min="0" max="90" step="1"> <span class="deg-sym">°</span>
+                <!-- ★新增⑦：起点改为 K 点 35°00'N 140°00'E -->
+                <input type="number" id="startLatDeg" value="35" min="0" max="90" step="1"> <span class="deg-sym">°</span>
                 <input type="number" id="startLatMin" value="0.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
                 <select id="startLatDir"><option value="N" selected>N</option><option value="S">S</option></select>
             </span>
@@ -279,14 +329,15 @@
             <span class="wp-label end-label">🟩 终点</span>
             <span class="coord-group">
                 <span>纬度</span>
-                <input type="number" id="endLatDeg" value="20" min="0" max="90" step="1"> <span class="deg-sym">°</span>
-                <input type="number" id="endLatMin" value="0.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
+                <!-- ★新增⑦：终点改为 S 点 32°30'N 117°30'W -->
+                <input type="number" id="endLatDeg" value="32" min="0" max="90" step="1"> <span class="deg-sym">°</span>
+                <input type="number" id="endLatMin" value="30.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
                 <select id="endLatDir"><option value="N" selected>N</option><option value="S">S</option></select>
             </span>
             <span class="coord-group">
                 <span>经度</span>
-                <input type="number" id="endLonDeg" value="100" min="0" max="180" step="1"> <span class="deg-sym">°</span>
-                <input type="number" id="endLonMin" value="0.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
+                <input type="number" id="endLonDeg" value="117" min="0" max="180" step="1"> <span class="deg-sym">°</span>
+                <input type="number" id="endLonMin" value="30.0" min="0" max="59.9" step="0.1"> <span class="min-sym">'</span>
                 <select id="endLonDir"><option value="E">E</option><option value="W" selected>W</option></select>
             </span>
         </div>
@@ -301,9 +352,17 @@
             <button id="btnReset" class="reset">↺ 返回起点</button>
             <button id="btnTrail" class="active">📍 轨迹（显示）</button>
         </div>
+        <!-- ★新增②：航向输入框（功能同航速；留空 = 自动朝终点航行） -->
+        <div class="speed-control">
+            <span>🧭 航向：</span>
+            <input type="number" id="courseInput" placeholder="自动" min="0" max="359" step="0.1">
+            <span>°</span>
+            <button id="btnCourseAuto" class="course-auto">自动</button>
+        </div>
         <div class="speed-control">
             <span>⚡ 航速：</span>
-            <input type="number" id="speedInput" value="78" min="0" max="100" step="1">
+            <!-- ★修改④：航速输入框上限由 100 调整为 200 -->
+            <input type="number" id="speedInput" value="78" min="0" max="200" step="1">
             <span>kn</span>
         </div>
         <span class="key-hint">拖拽红/绿点改变航线</span>
@@ -338,6 +397,8 @@
     const endLonDir   = document.getElementById('endLonDir');
 
     const speedInput = document.getElementById('speedInput');
+    const courseInput = document.getElementById('courseInput'); // ★新增②
+    const btnCourseAuto = document.getElementById('btnCourseAuto'); // ★新增②
     const btnStart   = document.getElementById('btnStart');
     const btnStop    = document.getElementById('btnStop');
     const btnReset   = document.getElementById('btnReset');
@@ -463,16 +524,19 @@
     }
 
     // ==================== 数据 ====================
-    let startPoint = { lat: 30, lon: 140 };
-    let endPoint   = { lat: 20, lon: 260 }; // 100°W => 360-100=260
+    /* ★新增⑦：默认航点改为北太平洋主航线放洋点
+       K 点（日本侧离岸点）35°00'N 140°00'E；S 点（圣迭戈外海）32°30'N 117°30'W */
+    let startPoint = { lat: 35,   lon: 140   }; // K
+    let endPoint   = { lat: 20.5, lon: 249 }; // S：117.5°W => 360-111=249
     let shipA = { lat: startPoint.lat, lon: startPoint.lon, course: 0, trail: [], arrived: false };
     let shipB = { lat: startPoint.lat, lon: startPoint.lon, course: 0, trail: [], arrived: false };
     let rhumbBearing = bearingRhumbLine(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon);
 
-    let speed = 78;
+    let speed = 30;
     let running = false;
     let simInterval = null;
     let showTrail = true;
+    let manualCourse = null; // ★新增②：null=自动朝终点；数值=手动固定航向（度）
     let dragging = null;
 
     // ==================== 更新表格数据 ====================
@@ -501,7 +565,8 @@
         distEndA.className = 'data-cell' + (shipA.arrived ? ' arrived' : '');
         timeA.className    = 'data-cell' + (shipA.arrived ? ' arrived' : '');
 
-        speedInput.value = speed.toFixed(1);
+        /* ★修改④：用户聚焦输入框时不回写，失焦后自动恢复同步 */
+        if (document.activeElement !== speedInput) speedInput.value = speed.toFixed(1);
     }
 
     // ==================== 更新输入框（从当前点同步） ====================
@@ -544,7 +609,11 @@
 
         rhumbBearing = bearingRhumbLine(startPoint.lat, startPoint.lon, endPoint.lat, endPoint.lon);
 
-        // 重置船舶到新起点（并停止模拟）
+        // ★新增②：航点变化后恢复自动航向
+        manualCourse = null;
+        courseInput.value = '';
+
+        // 重置船舶到新起点（并停止模拟
         if (running) {
             running = false;
             clearInterval(simInterval);
@@ -572,11 +641,80 @@
         inp.addEventListener('input', updatePointsFromInputs);
     });
 
+    /* SECTION: coastline */
+    /* ★新增⑥：真实海岸线底图。数据为地理经纬度（度，经度按本图 100E→280E 约定，
+       西经=360+值），仅做简化轮廓；用 Mercator 投影换算像素后绘制。 */
+    const COAST_POLYS = {
+      /* 欧亚大陆东缘：中南半岛→中国→朝鲜边境→俄罗斯远东→堪察加 */
+      ASIA: [[104.0,1.2],[103.6,1.3],[102.8,1.8],[102.2,2.2],[101.5,3.1],[100.9,4.2],[100.3,5.4],[99.7,6.5],[99.3,8.3],[98.5,10.0],[98.2,11.6],[98.4,13.0],[99.0,13.9],[99.9,13.4],[100.5,12.5],[101.4,11.8],[102.6,12.3],[103.5,10.6],[104.9,10.4],[105.9,9.3],[106.7,10.4],[107.6,10.7],[108.9,12.4],[109.4,13.4],[109.2,15.4],[108.2,16.2],[107.1,17.9],[106.1,18.9],[105.8,19.6],[106.6,20.4],[107.6,21.0],[108.6,21.6],[109.9,21.4],[110.5,20.2],[111.6,21.1],[112.9,21.7],[113.7,22.1],[114.4,22.6],[115.6,22.8],[116.7,23.2],[117.7,23.9],[118.2,24.6],[119.2,25.3],[119.6,26.3],[120.2,27.4],[121.0,28.6],[121.5,29.4],[121.9,30.5],[122.0,31.3],[121.3,31.8],[121.0,32.6],[120.4,33.7],[119.7,34.6],[119.4,35.1],[120.3,36.1],[121.5,36.9],[122.7,37.4],[121.8,37.9],[120.6,38.0],[119.6,37.6],[119.0,38.3],[118.0,38.8],[117.6,39.2],[118.6,39.6],[119.5,39.9],[120.3,40.2],[121.3,40.9],[121.6,39.9],[121.3,38.8],[122.0,38.5],[122.9,39.6],[123.7,39.8],[124.2,39.9],[126.5,41.3],[128.2,42.0],[129.8,42.5],[131.9,43.1],[133.5,44.2],[135.2,45.6],[136.5,46.3],[137.3,47.4],[138.4,48.7],[139.1,50.0],[140.1,51.3],[140.7,53.2],[141.7,53.6],[142.6,54.3],[144.4,54.7],[146.3,54.5],[148.4,55.2],[149.9,56.2],[151.4,57.4],[152.8,58.6],[154.2,59.1],[155.8,58.4],[156.6,57.0],[156.4,55.5],[155.7,54.0],[155.9,52.5],[156.6,51.2],[158.2,52.0],[159.5,53.2],[160.8,54.5],[161.8,55.8],[162.4,57.0],[162.2,58.5],[161.5,59.5],[162.4,60.3],[165.0,61.5],[168.0,62.8],[171.0,63.8],[174.0,64.6],[177.0,65.2],[180.0,65.5],[183.0,65.8],[186.0,66.2],[190.0,66.4],[190.0,70.0],[60.0,70.0],[60.0,-15.0],[104.0,-15.0]],
+      /* 朝鲜半岛 */
+      KOREA: [[124.2,39.9],[126.5,41.3],[128.2,42.0],[129.8,42.5],[129.4,41.0],[128.6,40.0],[128.0,39.1],[128.7,38.0],[129.3,37.2],[129.6,36.4],[129.3,35.6],[129.1,35.1],[128.5,34.9],[127.7,34.5],[126.9,34.4],[126.4,34.6],[126.3,35.2],[126.5,36.0],[126.8,36.3],[126.5,37.0],[126.6,37.6],[126.3,37.9],[125.6,38.4],[124.9,38.9],[124.4,39.4],[124.2,39.9]],
+      /* 本州 / 北海道 / 四国 / 九州 */
+      HONSHU: [[131.0,34.0],[132.3,34.2],[133.4,34.1],[134.6,34.1],[135.0,34.6],[135.5,34.7],[136.0,34.4],[136.8,34.3],[137.4,35.0],[138.3,34.9],[139.0,35.1],[139.8,35.3],[140.4,35.3],[140.9,35.7],[140.8,36.5],[141.0,37.5],[141.0,38.5],[141.5,39.5],[141.4,40.5],[141.4,41.3],[140.5,41.5],[140.2,41.3],[140.0,40.5],[139.9,39.8],[139.8,39.0],[139.4,38.3],[138.9,37.8],[138.4,37.0],[137.6,36.6],[136.9,36.5],[136.2,36.1],[135.6,35.5],[135.2,35.4],[134.9,35.5],[134.2,35.5],[133.3,35.3],[132.5,35.1],[131.8,34.7],[131.2,34.4],[130.9,34.0]],
+      HOKKAIDO: [[139.9,42.1],[140.2,42.6],[139.8,43.2],[140.3,43.3],[140.5,44.0],[141.0,44.4],[141.4,45.1],[141.9,45.5],[142.6,45.3],[143.9,45.4],[144.4,44.9],[145.3,44.3],[145.0,43.6],[144.7,43.0],[144.3,42.9],[143.5,42.3],[143.2,41.9],[142.4,42.0],[141.7,41.5],[141.2,41.3],[140.7,41.7],[140.1,41.8],[139.9,42.1]],
+      SHIKOKU: [[133.6,34.0],[134.3,34.2],[134.8,34.0],[134.7,33.5],[134.3,33.2],[133.6,33.5],[133.2,34.0],[133.6,34.0]],
+      KYUSHU: [[130.0,33.9],[130.4,33.6],[130.9,33.9],[131.3,33.6],[131.7,33.3],[131.6,32.7],[131.4,31.9],[131.0,31.3],[130.7,31.0],[130.4,31.4],[130.2,32.1],[130.4,32.6],[129.9,32.9],[129.7,33.3],[130.0,33.6],[130.0,33.9]],
+      /* 台湾 / 海南 / 库页岛 */
+      TAIWAN: [[121.3,25.2],[121.5,24.4],[121.1,23.0],[120.9,22.0],[120.3,22.6],[120.1,23.5],[120.4,24.5],[120.8,24.9],[121.3,25.2]],
+      HAINAN: [[109.0,19.8],[110.0,20.1],[110.6,20.1],[111.0,19.8],[110.5,19.0],[110.0,18.4],[109.2,18.2],[108.7,18.8],[108.7,19.5],[109.0,19.8]],
+      SAKHALIN: [[141.7,47.6],[142.0,48.9],[142.4,50.0],[143.0,51.3],[144.0,52.6],[145.0,53.9],[146.0,54.4],[146.3,53.1],[145.3,51.2],[144.0,49.3],[142.8,47.9],[142.0,46.9],[141.5,47.2],[141.0,47.8],[141.7,47.6]],
+      /* 加里曼丹（婆罗洲北缘）/ 苏门答腊东北角 / 吕宋 / 棉兰老 */
+      BORNEO: [[109.0,2.5],[110.2,1.8],[111.5,1.0],[112.8,0.2],[114.0,-0.5],[116.0,-1.5],[117.5,-0.8],[117.6,0.5],[117.0,1.5],[117.6,2.4],[117.9,3.4],[117.3,4.5],[116.5,5.2],[116.1,6.0],[116.8,6.9],[116.2,7.0],[115.5,6.0],[115.0,5.0],[115.4,4.3],[114.0,4.5],[113.0,3.6],[112.0,3.0],[111.0,2.5],[110.0,2.9],[109.5,2.9],[109.0,2.5]],
+      SUMATRA: [[95.2,5.5],[97.2,5.1],[98.6,4.2],[99.5,3.1],[100.5,2.1],[101.7,1.3],[102.9,0.5],[103.9,-0.3],[103.0,-1.2],[101.3,-1.0],[99.8,-0.2],[98.4,0.6],[97.0,1.8],[95.6,3.4],[95.2,5.5]],
+      LUZON: [[120.6,18.5],[121.5,18.3],[122.2,17.0],[122.0,15.0],[122.4,14.2],[121.4,13.5],[120.6,13.8],[120.0,14.5],[119.9,15.8],[120.3,16.8],[120.6,18.5]],
+      MINDANAO: [[123.9,9.9],[125.0,10.5],[126.2,9.4],[126.7,7.5],[126.1,6.0],[125.4,5.6],[124.2,6.1],[123.5,7.5],[123.1,8.5],[123.9,9.9]],
+      /* 北美西岸：中美洲→墨西哥→美国→加拿大→阿拉斯加→白令 */
+      NAMERICA: [[265.0,16.0],[263.0,16.6],[261.0,17.2],[259.5,17.9],[258.2,18.6],[257.2,19.3],[256.4,20.0],[255.7,20.7],[255.1,21.4],[254.6,22.1],[254.1,22.8],[253.7,23.4],[253.1,24.1],[252.4,24.9],[251.7,25.7],[251.0,26.5],[250.4,27.2],[249.9,27.9],[249.2,28.8],[248.5,29.7],[247.7,30.5],[246.9,31.2],[246.1,31.7],[245.4,31.9],[245.0,32.2],[244.2,32.6],[243.3,32.8],[242.4,33.4],[241.6,34.1],[240.8,34.5],[240.0,35.2],[239.3,36.0],[238.9,36.7],[238.2,37.4],[237.4,37.8],[237.1,38.3],[236.7,39.0],[236.2,39.7],[235.7,40.4],[235.3,41.2],[235.0,42.0],[234.8,42.8],[235.2,43.4],[235.5,44.1],[235.4,44.8],[235.6,45.6],[236.0,46.3],[236.4,47.1],[236.8,47.9],[236.6,48.4],[235.9,48.9],[235.3,49.5],[234.8,50.2],[234.1,51.0],[233.4,51.8],[232.6,52.6],[231.7,53.4],[230.7,54.2],[229.6,55.0],[228.4,55.8],[227.1,56.6],[225.8,57.4],[224.5,58.2],[223.4,59.1],[222.2,59.9],[221.0,60.4],[219.8,60.6],[218.3,60.6],[216.7,60.6],[215.0,60.5],[213.4,60.1],[212.0,59.9],[210.8,59.4],[209.8,58.9],[208.9,58.3],[207.9,57.9],[206.7,57.7],[205.4,57.7],[204.1,57.9],[202.8,58.2],[201.5,58.5],[200.2,58.8],[198.9,58.9],[197.7,58.7],[196.9,58.2],[197.0,57.5],[197.8,56.8],[198.7,56.2],[199.6,55.8],[198.4,55.4],[196.9,55.2],[195.4,55.0],[193.9,54.8],[192.4,54.6],[190.9,54.4],[189.4,54.3],[187.9,54.2],[186.5,54.1],[185.2,54.6],[184.8,55.4],[184.9,56.3],[184.7,57.2],[184.3,58.0],[183.8,58.8],[183.2,59.6],[182.6,60.4],[182.0,61.2],[181.2,62.0],[180.4,62.8],[179.6,63.5],[178.9,64.2],[178.2,65.0],[177.8,65.8],[177.6,66.5],[180.0,68.0],[200.0,69.0],[230.0,70.0],[260.0,70.0],[280.0,70.0],[285.0,66.0],[285.0,-15.0],[272.0,-15.0],[270.0,6.5],[272.0,7.8],[273.6,9.3],[273.9,10.7],[273.6,11.8],[272.6,12.8],[271.4,13.7],[270.2,14.4],[269.0,15.2],[267.2,15.9],[265.0,16.0]],
+      /* 下加利福尼亚半岛 / 温哥华岛 */
+      BAJA: [[249.7,22.9],[250.1,23.7],[249.5,24.6],[248.8,25.4],[248.1,26.3],[247.3,27.3],[246.5,28.4],[245.7,29.5],[244.9,30.6],[244.1,31.6],[243.4,32.2],[242.8,32.6],[244.3,31.8],[244.8,30.9],[245.4,29.9],[246.1,28.9],[246.8,27.9],[247.4,26.9],[248.1,25.9],[248.8,25.0],[249.5,24.0],[250.0,23.2],[249.7,22.9]],
+      VANISL: [[235.9,48.5],[235.2,49.0],[235.4,49.7],[235.9,50.4],[236.5,51.1],[237.3,51.6],[237.8,51.2],[237.2,50.4],[236.7,49.6],[236.4,48.9],[235.9,48.5]]
+    };
+    /* 弧形岛链（只描线不填面）：千岛群岛 / 阿留申群岛 */
+    const COAST_CHAINS = {
+      KURILS: [[145.5,43.5],[146.8,44.3],[148.2,45.2],[149.9,46.0],[151.5,46.8],[152.2,47.8],[151.8,48.9],[152.5,49.8],[153.8,50.6],[155.2,51.3]],
+      ALEUTIANS: [[186.5,54.1],[184.5,53.6],[182.0,53.0],[179.0,52.3],[176.0,52.1],[173.0,52.3],[170.0,52.8],[167.0,53.4],[164.0,53.9],[161.0,53.4],[158.0,52.4],[155.5,51.4],[153.5,50.6]]
+    };
+    function drawCoast() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(leftMargin, top, mapW, mapH);
+        ctx.clip(); /* 超出图廓的部分自动裁掉 */
+        ctx.lineJoin = 'round';
+        Object.keys(COAST_POLYS).forEach(function (k) {
+            const pts = COAST_POLYS[k];
+            ctx.beginPath();
+            pts.forEach(function (pt, i) {
+                const q = mercatorXY(pt[1], pt[0]);
+                if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(226,232,214,0.9)';   /* 淡陆色，浅而不抢航线 */
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(110,128,100,0.75)'; /* 细岸线 */
+            ctx.lineWidth = 0.9;
+            ctx.stroke();
+        });
+        Object.keys(COAST_CHAINS).forEach(function (k) {
+            const pts = COAST_CHAINS[k];
+            ctx.beginPath();
+            pts.forEach(function (pt, i) {
+                const q = mercatorXY(pt[1], pt[0]);
+                if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+            });
+            ctx.strokeStyle = 'rgba(110,128,100,0.7)';
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+        });
+        ctx.restore();
+    }
+
     // ==================== 绘制海图 ====================
     function drawChart() {
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = '#f0f8ff';
         ctx.fillRect(0, 0, W, H);
+
+        drawCoast(); /* ★新增⑥：海岸线画在经纬网之下，网格、航线、船位均照常清晰 */
 
         // 经纬网
         ctx.strokeStyle = '#7aa8c7';
@@ -735,9 +873,17 @@
         const stepHours = 0.05;
         const dist = speed * stepHours;
 
+        // ★新增②：手动航向模式下，两船都按设定航向行驶
+        if (manualCourse !== null) {
+            shipA.course = manualCourse;
+            shipB.course = manualCourse;
+        }
+
         if (!shipA.arrived) {
             const dEndA = haversineDist(shipA.lat, shipA.lon, endPoint.lat, endPoint.lon);
-            if (dEndA < 0.5) {
+            /* ★修复①：dEndA <= dist 表示这一步会跨过终点——直接吸附到终点判到达，
+               否则船会越过→折返→再越过，在终点附近来回转圈 */
+            if (dEndA <= dist || dEndA < 0.5) {
                 shipA.arrived = true;
                 shipA.lat = endPoint.lat;
                 shipA.lon = endPoint.lon;
@@ -751,12 +897,12 @@
 
         if (!shipB.arrived) {
             const dEndB = haversineDist(shipB.lat, shipB.lon, endPoint.lat, endPoint.lon);
-            if (dEndB < 0.5) {
+            if (dEndB <= dist || dEndB < 0.5) { /* ★修复①：同上，防过冲摆动 */
                 shipB.arrived = true;
                 shipB.lat = endPoint.lat;
                 shipB.lon = endPoint.lon;
             } else {
-                const bearing = bearingGreatCircle(shipB.lat, shipB.lon, endPoint.lat, endPoint.lon);
+                const bearing = (manualCourse !== null) ? manualCourse : bearingGreatCircle(shipB.lat, shipB.lon, endPoint.lat, endPoint.lon); // ★修改②
                 shipB.course = bearing;
                 const newB = moveGreatCircle(shipB.lat, shipB.lon, shipB.course, dist);
                 shipB.lat = newB.lat;
@@ -837,15 +983,39 @@
     function updateSpeed(val) {
         let v = parseFloat(val);
         if (isNaN(v)) v = 0;
-        v = Math.min(100, Math.max(0, v));
+        v = Math.min(200, Math.max(0, v)); // ★修改④：上限 100 → 200
         speed = v;
         shipA.speed = speed;
         shipB.speed = speed;
-        speedInput.value = speed.toFixed(1);
+        /* ★修改④：输入框正被用户编辑时不回写数值，避免"1""12"…被打回重排 */
+        if (document.activeElement !== speedInput) speedInput.value = speed.toFixed(1);
         drawChart();
     }
     speedInput.addEventListener('input', function() {
         updateSpeed(this.value);
+    });
+    /* ★修改④：失焦(change)时再同步一次，把超限输入纠正为钳制后的实际速度 */
+    speedInput.addEventListener('change', function() {
+        updateSpeed(this.value);
+    });
+
+    // ★新增②：航向输入事件（功能同航速：边输入边生效）
+    courseInput.addEventListener('input', function() {
+        const v = parseFloat(this.value);
+        if (isNaN(v)) { manualCourse = null; return; }
+        manualCourse = ((v % 360) + 360) % 360;
+        if (!running) {
+            shipA.course = manualCourse;
+            shipB.course = manualCourse;
+            drawChart();
+        }
+    });
+    btnCourseAuto.addEventListener('click', function() {
+        manualCourse = null;
+        courseInput.value = '';
+        shipA.course = rhumbBearing;
+        shipB.course = 0;
+        drawChart();
     });
 
     // ==================== 鼠标拖拽航点 ====================
@@ -861,12 +1031,14 @@
         return (dx*dx + dy*dy) <= 100;
     }
 
-    canvas.addEventListener('mousedown', function(e) {
+    /* ★修改①（手机端适配）：mousedown/mousemove 升级为 pointerdown/pointermove，
+       指针事件同时覆盖鼠标和手指触摸，手机上也能拖拽红/绿航点 */
+    canvas.addEventListener('pointerdown', function(e) {
         const pos = getMousePos(e);
-        if (isPointHit(startPoint.lat, startPoint.lon, pos.x, pos.y)) dragging = 'start';
-        else if (isPointHit(endPoint.lat, endPoint.lon, pos.x, pos.y)) dragging = 'end';
+        if (isPointHit(startPoint.lat, startPoint.lon, pos.x, pos.y)) { dragging = 'start'; canvas.setPointerCapture(e.pointerId); }
+        else if (isPointHit(endPoint.lat, endPoint.lon, pos.x, pos.y)) { dragging = 'end'; canvas.setPointerCapture(e.pointerId); }
     });
-    canvas.addEventListener('mousemove', function(e) {
+    canvas.addEventListener('pointermove', function(e) {
         if (!dragging) return;
         const pos = getMousePos(e);
         const {lat, lon} = inverseMercator(pos.x, pos.y);
@@ -888,8 +1060,8 @@
         }
         drawChart();
     });
-    canvas.addEventListener('mouseup', function() { if (dragging) { dragging = null; drawChart(); } });
-    canvas.addEventListener('mouseleave', function() { if (dragging) { dragging = null; drawChart(); } });
+    canvas.addEventListener('pointerup', function() { if (dragging) { dragging = null; drawChart(); } });      /* ★修改① */
+    canvas.addEventListener('pointercancel', function() { if (dragging) { dragging = null; drawChart(); } });  /* ★修改① */
 
     // ==================== 按钮事件 ====================
     btnStart.addEventListener('click', startShips);
