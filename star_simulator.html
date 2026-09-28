@@ -980,8 +980,13 @@ btnSetByTime.addEventListener("click",()=>{
     const GHAγ=computeGHAgamma(year,mon,day,utcTotalHour);
     let LHA_gamma=(GHAγ+OBS_LON)%360;
     if(LHA_gamma<0) LHA_gamma+=360;
+
     smoothRotateTo(LHA_gamma);
-    alert(`自动调卡完成\nUTC = ${utcTotalHour.toFixed(2)}h\nGHAγ = ${GHAγ.toFixed(2)} °\nLHAγ = ${LHA_gamma.toFixed(2)} °`);
+
+    // ★ 等动画播放完（约 0.85 秒）再弹窗
+    setTimeout(()=>{
+        alert(`自动调卡完成\nUTC = ${utcTotalHour.toFixed(2)}h\nGHAγ = ${GHAγ.toFixed(2)} °\nLHAγ = ${LHA_gamma.toFixed(2)} °`);
+    }, 850);
 });
 
 loadOffsets();
