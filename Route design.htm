@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>航线设计</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #2b3e50;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+        }
+        .chart-container {
+            background: #fff;
+            padding: 12px 12px 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 100%;
+            width: fit-content;
+            margin: auto;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a3a5c;
+            margin-bottom: 6px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .endpoint-panel {
+            width: 100%; background: #f5f9ff; border: 1px solid #b0c8dd;
+            border-radius: 6px; padding: 6px 12px; margin-bottom: 8px;
+            display: flex; flex-wrap: wrap; gap: 6px 24px;
+            align-items: center; font-size: 13px;
+        }
+        .endpoint-panel .ep-item { display: flex; align-items: center; gap: 5px; }
+        .endpoint-panel .ep-badge {
+            padding: 2px 9px; border-radius: 4px; color: #fff;
+            font-weight: bold; font-size: 12px;
+        }
+        .ep-badge.start { background: #2e7d32; }
+        .ep-badge.end   { background: #c62828; }
+        .endpoint-panel label { color: #1a3a5c; font-weight: 600; }
+        .endpoint-panel input[type="number"] {
+            width: 66px; padding: 2px 4px; border: 1px solid #b0c8dd;
+            border-radius: 4px; font-size: 13px; text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        .endpoint-panel .unit { color: #666; font-size: 12px; }
+        .endpoint-panel .ep-tip { color: #888; font-size: 11px; margin-left: auto; }
+
+        /* 区域设置面板 */
+        .map-bounds-panel {
+            width: 100%; background: #eef4fa; border: 1px solid #b0c8dd;
+            border-radius: 6px; padding: 6px 12px; margin-bottom: 8px;
+            display: flex; flex-wrap: wrap; gap: 6px 12px;
+            align-items: center; font-size: 12px;
+        }
+        .map-bounds-panel .bp-title { font-weight: bold; color: #1a3a5c; }
+        .map-bounds-panel input[type="number"] {
+            width: 55px; padding: 2px 4px; border: 1px solid #b0c8dd;
+            border-radius: 4px; font-size: 12px; text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        .map-bounds-panel button {
+            padding: 3px 10px; background: #3498db; border: none; color: #fff;
+            border-radius: 4px; cursor: pointer; font-size: 12px;
+        }
+        .map-bounds-panel button:hover { background: #2980b9; }
+        .map-bounds-panel button.preset { background: #7f8c8d; }
+        .map-bounds-panel button.preset:hover { background: #95a5a6; }
+
+        .waypoint-panel {
+            width: 100%; background: #f5f9ff; border: 1px solid #b0c8dd;
+            border-radius: 6px; padding: 6px; margin-bottom: 8px;
+            max-height: 200px; overflow-y: auto; overflow-x: auto;
+        }
+        .waypoint-panel table {
+            width: 100%; border-collapse: collapse; font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        .waypoint-panel th, .waypoint-panel td {
+            padding: 4px 6px; text-align: center;
+            border: 1px solid #c8d8e8; white-space: nowrap;
+        }
+        .waypoint-panel th {
+            background: #dce6f0; font-weight: 700; color: #1a3a5c;
+            font-family: Arial, sans-serif; position: sticky; top: 0; z-index: 1;
+        }
+        .waypoint-panel .row-label {
+            font-weight: 700; text-align: center; background: #eef4fa;
+            color: #333; font-family: Arial, sans-serif;
+        }
+        .waypoint-panel .row-start .row-label { color: #fff; background: #2e7d32; }
+        .waypoint-panel .row-end .row-label   { color: #fff; background: #c62828; }
+        .waypoint-panel .row-start { background: #e8f5e9; }
+        .waypoint-panel .row-end   { background: #ffebee; }
+        .waypoint-panel .row-total { background: #f0f4f8; font-weight: bold; color: #1a3a5c; }
+        
+        .waypoint-panel .del-btn {
+            padding: 1px 8px; border: 1px solid #e0a0a0; border-radius: 4px;
+            background: #fff0f0; color: #c62828; cursor: pointer;
+            font-size: 12px; font-weight: bold; line-height: 1.4; transition: 0.15s;
+        }
+        .waypoint-panel .del-btn:hover {
+            background: #f44336; color: #fff; border-color: #f44336;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 19.6cm;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border: 2px solid #222;
+            background: #f0f8ff;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .ref-points-panel {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid #888;
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 11px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            max-height: calc(100% - 16px);
+            overflow-y: auto;
+            display: none;
+            pointer-events: none;
+        }
+        .ref-points-panel .title {
+            font-weight: bold; color: #1a3a5c; font-size: 12px;
+            margin-bottom: 5px; border-bottom: 1px solid #ccc;
+            padding-bottom: 3px;
+        }
+        .ref-points-panel table {
+            border-collapse: collapse; width: 100%;
+            font-family: 'Courier New', monospace; font-size: 10.5px;
+        }
+        .ref-points-panel th, .ref-points-panel td {
+            border: 1px solid #ccc; padding: 1px 4px;
+            text-align: center; white-space: nowrap;
+        }
+        .ref-points-panel th { background: #e8eef5; color: #1a3a5c; }
+
+        .control-panel {
+            width: 100%; background: #f5f9ff; border: 1px solid #b0c8dd;
+            border-radius: 6px; padding: 6px 14px; margin-top: 8px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+        }
+        .control-panel .btn-group {
+            display: flex; flex-wrap: wrap; gap: 6px;
+        }
+        .control-panel button {
+            padding: 5px 16px; border: none; border-radius: 4px;
+            background: #4c6a85; color: #fff; cursor: pointer;
+            font-size: 13px; transition: 0.2s; font-weight: 500;
+        }
+        .control-panel button:hover { background: #2b3e50; }
+        .control-panel button.active { background: #4CAF50; }
+        .control-panel button.stop { background: #f44336; }
+        .control-panel button.stop:hover { background: #da190b; }
+        .control-panel button.reset { background: #ff8f00; }
+        .control-panel button.reset:hover { background: #e67e00; }
+        .control-panel button.toggle-map { background: #8e44ad; }
+        .control-panel button.toggle-map:hover { background: #6c3483; }
+        .control-panel button.ref-pts { background: #d35400; }
+        .control-panel button.ref-pts:hover { background: #e67e22; }
+        .control-panel button.tool-btn { background: #16a085; }
+        .control-panel button.tool-btn:hover { background: #1abc9c; }
+        .control-panel button.export-btn { background: #2c3e50; }
+        .control-panel button.export-btn:hover { background: #1a252f; }
+        
+        .control-panel .speed-control {
+            display: flex; align-items: center; gap: 6px;
+            font-weight: bold; color: #1a3a5c; font-size: 14px;
+        }
+        .control-panel .speed-control input[type="number"] {
+            width: 60px; padding: 2px 4px; border: 1px solid #b0c8dd;
+            border-radius: 4px; font-size: 14px; font-weight: bold;
+            text-align: center;
+        }
+        .control-panel .key-hint {
+            color: #555; font-size: 12px; margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .help-box {
+            width: 100%; background: #fffbe8; border: 1px solid #e6d27a;
+            border-radius: 6px; margin-bottom: 8px; font-size: 13px;
+        }
+        .help-box summary {
+            cursor: pointer; padding: 6px 10px; font-weight: 700;
+            color: #7a5c00; user-select: none;
+        }
+        .help-box .help-content { padding: 2px 12px 10px; color: #4a3f1a; }
+        .help-box .help-content p { margin: 6px 0; line-height: 1.6; }
+
+        @media (max-width: 600px) {
+            body { padding: 8px; }
+            .chart-container { padding: 8px 6px 6px 6px; }
+            .endpoint-panel { flex-direction: column; align-items: stretch; gap: 4px; }
+            .endpoint-panel .ep-tip { margin-left: 0; }
+            .map-bounds-panel { flex-direction: column; align-items: stretch; }
+            .control-panel { flex-direction: column; align-items: stretch; }
+            .control-panel .key-hint { margin-left: 0; text-align: center; }
+            .chart-title { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="chart-container">
+    <div class="chart-title">🌍 墨卡托海图 · 航线设计</div>
+
+    <details class="help-box">
+        <summary>📖 使用说明（点击展开 / 收起）</summary>
+        <div class="help-content">
+            <p><b>提示：本小程序可用于在墨卡托海图上进行航线设计、海图作业练习，生成的内容仅供参考。</b></p>
+            <p><b>💡 核心功能：</b>本海图支持<b>任意海域范围</b>切换。</p>
+            <p><b>1. 预设推荐航线图</b>：点击预设会自动加载同目录下对应的推荐航线图（北太平洋 、欧亚 、北大西洋 ）。航线图/矢量图可相互切换。也可随时上传其它海图”替换当前图片。</p>
+            <p><b>2. 航线设计</b>：选择预设海域（加载推荐航线图)，在始终点之间点击添加分点。始终点和各分点可任意移动“💾 保存路线”可将起终点、分点、航速存至浏览器。</p>
+            <p><b>3. 导出图片</b>：点击“🖨️ 导出图片”，将当前底图和航线保存为高清 PNG。</p>
+        </div>
+    </details>
+
+    <!-- ===== 起终点输入面板 ===== -->
+    <div class="endpoint-panel">
+        <div class="ep-item">
+            <span class="ep-badge start">出发点</span>
+            <label>纬度</label>
+            <input type="number" id="startLat" value="35.0" step="0.1" min="-90" max="90">
+            <span class="unit">°</span>
+            <label>经度</label>
+            <input type="number" id="startLon" value="140.0" step="0.1" min="-180" max="360">
+            <span class="unit">°</span>
+        </div>
+        <div class="ep-item">
+            <span class="ep-badge end">到达点</span>
+            <label>纬度</label>
+            <input type="number" id="endLat" value="20.0" step="0.1" min="-90" max="90">
+            <span class="unit">°</span>
+            <label>经度</label>
+            <input type="number" id="endLon" value="220.0" step="0.1" min="-180" max="360">
+            <span class="unit">°</span>
+        </div>
+        <span class="ep-tip">经度支持负数(西经)或 0~360 (如 220° 即 140°W)</span>
+    </div>
+
+    <!-- ===== 海域范围设置 ===== -->
+    <div class="map-bounds-panel">
+        <span class="bp-title">🗺️ 海域范围：</span>
+        <label>左经度</label>
+        <input type="number" id="boundLonMin" value="100">
+        <label>右经度</label>
+        <input type="number" id="boundLonMax" value="282">
+        <label>下纬度</label>
+        <input type="number" id="boundLatMin" value="0">
+        <label>上纬度</label>
+        <input type="number" id="boundLatMax" value="60">
+        <button id="btnUpdateBounds">应用范围</button>
+        
+        <span style="margin-left:auto; font-weight:bold; color:#888;">预设：</span>
+        <button class="preset" onclick="setPreset('pac')">北太平洋</button>
+        <button class="preset" onclick="setPreset('eurasia')">欧亚航线</button>
+        <button class="preset" onclick="setPreset('atlantic')">北大西洋</button>
+    </div>
+
+    <!-- ===== 航路点列表 ===== -->
+    <div class="waypoint-panel">
+        <table>
+            <thead>
+                <tr>
+                    <th>编号</th><th>纬度</th><th>经度</th>
+                    <th>恒向线航向</th><th>距离</th><th>预计耗时</th><th>删除</th>
+                </tr>
+            </thead>
+            <tbody id="waypointList"></tbody>
+        </table>
+    </div>
+
+    <!-- ===== 海图画布 ===== -->
+    <div class="canvas-wrapper">
+        <canvas id="chartCanvas" width="820" height="380"></canvas>
+        
+        <!-- 推荐航线关键点浮层 -->
+        <div class="ref-points-panel" id="refPointsPanel">
+            <div class="title">📋 北太平洋关键点</div>
+            <table>
+                <thead><tr><th>代号</th><th>名称</th><th>纬度</th><th>经度</th></tr></thead>
+                <tbody id="refPointsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== 控制面板 ===== -->
+    <div class="control-panel">
+        <div class="btn-group">
+            <input type="file" id="bgUpload" accept="image/*" style="display:none;">
+            <button id="btnUpload" style="background:#2980b9;">📁 上传底图</button>
+            <button id="btnToggleMap" class="toggle-map">🖼️ 切换底图</button>
+            
+            <button id="btnSave" class="tool-btn">💾 保存路线</button>
+            <button id="btnLoad" class="tool-btn">📂 读取路线</button>
+            <button id="btnExport" class="export-btn">🖨️ 导出图片</button>
+            
+            <button id="btnAddWp" class="active">✏️ 添加航路点</button>
+            <button id="btnStart">▶ 启动</button>
+            <button id="btnStop" class="stop">⏹ 停止</button>
+            <button id="btnReset" class="reset">↺ 返回起点</button>
+            <button id="btnClear">🗑 清除航线</button>
+            <button id="btnRefPoints" class="ref-pts">📋 关键点表</button>
+        </div>
+        <div class="speed-control">
+            <span>⚡ 航速：</span>
+            <input type="number" id="speedInput" value="30" min="0" max="200" step="1">
+            <span>kn</span>
+        </div>
+        <span class="key-hint">拖动标记可移动；左键加航点；右键移动船</span>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ==================== DOM 引用 ====================
+    const waypointList  = document.getElementById('waypointList');
+    const btnUpload     = document.getElementById('btnUpload');
+    const bgUpload      = document.getElementById('bgUpload');
+    const btnToggleMap  = document.getElementById('btnToggleMap');
+    const btnSave       = document.getElementById('btnSave');
+    const btnLoad       = document.getElementById('btnLoad');
+    const btnExport     = document.getElementById('btnExport');
+    const btnAddWp      = document.getElementById('btnAddWp');
+    const btnStart      = document.getElementById('btnStart');
+    const btnStop       = document.getElementById('btnStop');
+    const btnReset      = document.getElementById('btnReset');
+    const btnClear      = document.getElementById('btnClear');
+    const btnRefPoints  = document.getElementById('btnRefPoints');
+    const refPointsPanel = document.getElementById('refPointsPanel');
+    const refPointsTable = document.getElementById('refPointsTable');
+    const speedInput    = document.getElementById('speedInput');
+    const canvas        = document.getElementById('chartCanvas');
+    const ctx           = canvas.getContext('2d');
+
+    const startLatInput = document.getElementById('startLat');
+    const startLonInput = document.getElementById('startLon');
+    const endLatInput   = document.getElementById('endLat');
+    const endLonInput   = document.getElementById('endLon');
+
+    // 边界输入框
+    const boundLonMinInput = document.getElementById('boundLonMin');
+    const boundLonMaxInput = document.getElementById('boundLonMax');
+    const boundLatMinInput = document.getElementById('boundLatMin');
+    const boundLatMaxInput = document.getElementById('boundLatMax');
+    const btnUpdateBounds  = document.getElementById('btnUpdateBounds');
+
+    // ==================== 地图参数 (动态) ====================
+    const W = 820, H = 380;
+    const mapW = 758, mapH = 316;
+    const leftMargin = 31, rightMargin = 31, top = 31, bottom = 33;
+
+    // 默认北太平洋
+    let lonMin = 100, lonMax = 282, latMin = 0, latMax = 60;
+
+    const COLOR_LAND_FILL   = '#f5e8b8';
+    const COLOR_LAND_STROKE = '#a89050';
+    const COLOR_SEA         = '#f0f8ff';
+
+    // 核心状态：当前使用的底图图片对象、是否处于底图模式
+    let currentBgImg = null;
+    let useBaseMap = false;
+    let hasStarted = false;
+
+    // ==================== 墨卡托投影 ====================
+    function mercY(phi) { return Math.log(Math.tan(Math.PI/4 + phi/2)); }
+    function mercatorXY(lat, lon) {
+        const lonNorm = (lon - lonMin) / (lonMax - lonMin);
+        const x = lonNorm * mapW + leftMargin;
+        const y0 = mercY(latMin * Math.PI/180), y1 = mercY(latMax * Math.PI/180);
+        const yVal = mercY(lat * Math.PI/180);
+        const yNorm = (yVal - y0) / (y1 - y0);
+        const y = (1 - yNorm) * mapH + top;
+        return {x, y};
+    }
+    function inverseMercator(px, py) {
+        let lon = (px - leftMargin) / mapW * (lonMax - lonMin) + lonMin;
+        let yNorm = 1 - (py - top) / mapH;
+        yNorm = Math.max(0, Math.min(1, yNorm));
+        const y0 = mercY(latMin * Math.PI/180), y1 = mercY(latMax * Math.PI/180);
+        const mercVal = y0 + yNorm * (y1 - y0);
+        let lat = 2 * Math.atan(Math.exp(mercVal)) - Math.PI/2;
+        lat = lat * 180 / Math.PI;
+        lat = Math.max(latMin, Math.min(latMax, lat));
+        lon = Math.max(lonMin, Math.min(lonMax, lon));
+        return {lat, lon};
+    }
+
+    // ==================== 陆地多边形 (含欧亚及北美洲东岸) ====================
+    const landPolys = [
+        // 1. 亚欧大陆主体 (包含欧洲及地中海)
+        [
+            [172,63],[169,62],[167,61],[165,60],[163.5,58.5],[163,57],[162.5,55],[161,53],[159.5,51.5],
+            [158,51],[156.5,51.5],[155.5,53],[155,55],[155.5,57],[156.5,58.5],[157.5,59.5],
+            [155,59.5],[152,59],[149,59],[146,59],[143,59],[140,57.5],[138.5,55.5],[137,54],
+            [138,52],[139.5,50.5],[141,49],[141.5,47.5],[140,46],[138.5,44.5],[136,44],
+            [134,43.5],[132,42.5],[130,42],[128,40.5],[127,39.5],[126,38.5],[125,40],[123,39.5],
+            [121,38.5],[119,37.5],[120.5,36.5],[122,35.5],[121,34],[119,34.5],[121.5,32],
+            [121,30],[120,28],[118,25.5],[116,23],[113,22],[110,21],[108,19],[107,17.5],
+            [108.5,16],[109,15],[108,13],[107,11],[105.5,9],[104,8],[102,6],[101,4],
+            [103,2],[104,1],[102,1],[100,3],[99,6],[98,9],[98,12],[99,14],[100,16],
+            
+            // 亚洲南部、印度、中东
+            [99, 10], [98, 6], [96, 4], [94, 15], [91, 21], [88, 21], [80, 15], [77, 8], [73, 15], [70, 23], [66, 25], [61, 25], [57, 24], [56, 22], [52, 18], [48, 14], [45, 13], [43, 12], 
+            // 中东、地中海东岸
+            [39, 15], [36, 23], [34, 28], [33, 31], [35, 33], [36, 36], [32, 36], [30, 37], [26, 38], [23, 40], [24, 41], [26, 41], [28, 41], 
+            // 黑海、里海、高加索
+            [29, 45], [34, 46], [38, 47], [41, 42], [48, 42], [50, 45], [55, 45],
+            // 欧洲轮廓
+            [48, 46], [40, 46], [35, 46], [30, 46], [28, 45], [28, 41], [24, 41], [23, 40], [22, 37], [20, 39], [16, 41],
+            [18, 40], [15, 38], [12, 44], [8, 44], [3, 43], [-2, 43], [-9, 43], [-9, 37], [-5, 36],
+            [-1, 46], [-4, 48], [0, 50], [2, 51], [5, 53], [8, 55], [8, 57], [10, 58], [5, 58], [5, 62], [15, 68], [25, 70], [30, 70],
+            [60, 70], [100, 76], [130, 73], [172, 63]
+        ],
+        // 2. 非洲大陆
+        [
+            [33, 31], [34, 28], [37, 22], [39, 15], [43, 11], [49, 11], [51, 0],
+            [-16, 0], [-17, 15], [-13, 27], [-10, 30], [-6, 36], [-2, 37],
+            [10, 34], [19, 31], [29, 31], [33, 31]
+        ],
+        // 3. 英国
+        [[2, 51], [0, 53], [-2, 56], [-3, 58], [-5, 58], [-6, 55], [-5, 53], [-3, 51]],
+        // 4. 爱尔兰
+        [[-10, 51], [-6, 52], [-6, 55], [-10, 54], [-10, 51]],
+        // 5. 斯里兰卡
+        [[80, 9], [82, 7], [81, 6], [79, 8], [80, 9]],
+        // 6. 西西里岛
+        [[13, 38], [15, 37], [15, 38], [13, 38]],
+        // 7. 撒丁岛
+        [[8, 39], [9, 41], [9, 41], [8, 39]],
+        // 8. 科西嘉岛
+        [[8, 42], [9, 43], [9, 42], [8, 42]],
+        // 9. 克里特岛
+        [[23, 35], [26, 35], [26, 35.5], [23, 35.5]],
+        // 10. 塞浦路斯
+        [[32, 35], [34, 35], [34, 35.5], [32, 35.5]],
+
+        // ==================== 北美洲/北大西洋部分 ====================
+        // 11. 北美洲东岸
+        [
+            [-85, 25], [-81, 25], [-80, 32], [-75, 37], [-74, 41], [-70, 43], [-66, 45], 
+            [-60, 47], [-55, 49], [-56, 52], [-60, 55], [-65, 60], [-70, 62], [-80, 62], [-85, 30]
+        ],
+        // 12. 格陵兰岛南部
+        [
+            [-45, 60], [-42, 60], [-40, 63], [-35, 65], [-30, 68], [-22, 70], [-20, 65], [-30, 58], [-42, 59]
+        ],
+        // 13. 冰岛
+        [
+            [-24, 65.5], [-22, 66], [-16, 66.5], [-13, 65], [-18, 63.5], [-22, 63.8]
+        ],
+        // 14. 加勒比群岛、南美北部
+        [
+            [-75, 15], [-70, 12], [-62, 10], [-50, 0], [-50, 15], [-60, 18], [-70, 18]
+        ],
+
+        // ==================== 其他岛屿 ====================
+        // 库页岛
+        [[142.5,54],[143.5,52],[144,50],[143.5,48],[142.5,46],[142,47],[141.5,49],[141.5,51],[142,53]],
+        // 北海道
+        [[140.5,45.5],[143,44.5],[145.5,43.5],[145,42.5],[142,41.8],[140.5,42.5],[140,44]],
+        // 本州+四国+九州
+        [
+            [141,45],[142,43],[141,41],[140,39],[139,37],[137,36.5],[135,35.5],[133,34.5],[131.5,34],
+            [130.5,33.5],[129.5,33],[130.5,32],[131.5,32.5],[132.5,33.5],[134,34],[135.5,35],
+            [137,35.5],[138.5,36.5],[140,38],[141,40],[141.5,42]
+        ],
+        // 台湾岛
+        [[121.5,25.5],[122.5,24],[121,22],[120,23],[120.5,25]],
+        // 吕宋岛
+        [[120,18.5],[122,18],[122.5,16],[121.5,14],[120.5,13.5],[119.8,15],[120,17]],
+        // 棉兰老岛
+        [[122,9],[124,9.5],[126,9],[126.5,7],[125.5,5.5],[123.5,5.5],[122,7]],
+        // 加里曼丹岛
+        [[109,2],[110,4],[113,4.5],[117,6.5],[119,5.5],[118.5,3.5],[116,1.5],[113,1],[110,1]],
+        // 苏门答腊
+        [[95,5.5],[98,4],[100.5,2],[102.5,0],[100,0]],
+        // 苏拉威西
+        [[120,1],[122,0.5],[124,1],[125,1.5],[123,2],[121,1.5]],
+        // 北美洲西岸
+        [
+            [192,60],[195,58],[200,56],[205,55.5],[210,56.5],[215,58],[218,59.5],[222,60],
+            [225,59],[228,57.5],[232,55.5],[235,53.5],[237,51.5],[238.5,49.5],[239.5,47.5],
+            [240.5,45.5],[241,43.5],[242,41.5],[243,39.5],[244,37.5],[245,35.5],[246.5,33.5],
+            [248,31.5],[249,29.5],[250,27.5],[251,25.5],[252,23.5],[254,21.5],[257,19.5],
+            [260,17.5],[263,15],
+            [263,17],[262,18],[260,19],[258,19.5],
+            [282,20],[282,60]
+        ],
+        // 下加利福尼亚
+        [[247,32],[248.5,30],[250,28],[251.5,26],[252.5,24],[251.5,23],[250,25],[248.5,27],[247,29]],
+        // 阿拉斯加半岛
+        [[205,57],[208,58],[210,59],[207,59.5],[204,58.5]],
+        // 中美洲地峡
+        [
+            [253, 22], [255, 21], [257, 20], [259, 19], [261, 18], [263, 17], [265, 16], [267, 15], [269, 14], [271, 13], [273, 12], [275, 11], [277, 10.5], [279, 10], [281, 9.5], [282, 9],
+            [282, 7], [280, 7.5], [278, 7.5], [276, 8], [274, 8.5], [272, 9], [270, 10], [268, 11], [266, 12], [264, 13], [262, 14], [260, 15], [258, 15.5], [256, 16.5], [254, 18], [253, 20]
+        ]
+    ];
+
+    const aleutians = [
+        [172,53],[176,52.5],[180,52.5],[184,52.5],[188,53],[192,53.5],[196,54],[200,54.5]
+    ];
+
+    const islands = [
+        [202,21.2,2.6],[203.2,19.6,2.2],[204.5,20.2,2.0],
+        [166,7.2,1.6],[152.8,7.3,1.5],[145,7.4,1.5]
+    ];
+
+    function drawLand() {
+        ctx.save();
+        ctx.lineJoin = 'round';
+        ctx.lineCap  = 'round';
+        landPolys.forEach(poly => {
+            ctx.beginPath();
+            poly.forEach((pt, i) => {
+                const p = mercatorXY(pt[1], pt[0]);
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = COLOR_LAND_FILL;
+            ctx.fill();
+            ctx.strokeStyle = COLOR_LAND_STROKE;
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+        });
+        aleutians.forEach(a => {
+            const p = mercatorXY(a[1], a[0]);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2);
+            ctx.fillStyle = COLOR_LAND_FILL;
+            ctx.fill();
+            ctx.strokeStyle = COLOR_LAND_STROKE;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+        islands.forEach(is => {
+            const p = mercatorXY(is[1], is[0]);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, is[2] || 2, 0, Math.PI * 2);
+            ctx.fillStyle = COLOR_LAND_FILL;
+            ctx.fill();
+            ctx.strokeStyle = COLOR_LAND_STROKE;
+            ctx.lineWidth = 0.9;
+            ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+    // ==================== 关键点位数据 ====================
+    const refPoints = [
+        { name: 'K', lat: 35.0, lon: 140.0, desc: '横滨(起点)' },
+        { name: 'A', lat: 35.0, lon: 160.0, desc: '分点A' },
+        { name: 'B', lat: 45.0, lon: 165.0, desc: '分点B' },
+        { name: 'C', lat: 48.0, lon: 170.0, desc: '分点C' },
+        { name: 'D', lat: 50.0, lon: 175.0, desc: '分点D' },
+        { name: 'S', lat: 20.0, lon: 220.0, desc: '分点S(140°W)' },
+        { name: 'Y', lat: 10.0, lon: 220.0, desc: '分点Y' },
+        { name: 'X', lat: 10.0, lon: 280.0, desc: '巴拿马(终点)' }
+    ];
+
+    function drawRefPoints() {
+        ctx.save();
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        refPoints.forEach(pt => {
+            const p = mercatorXY(pt.lat, pt.lon);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#e67e22';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = '#222';
+            ctx.fillText(pt.name, p.x + 8, p.y - 8);
+        });
+        ctx.restore();
+    }
+
+    function drawShanghai() {
+        const p = mercatorXY(31.2, 121.5);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#000';
+        ctx.fill();
+        ctx.font = '11px "Microsoft YaHei", Arial, sans-serif';
+        ctx.fillStyle = '#000';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('上海', p.x + 6, p.y);
+    }
+
+    // ==================== 航海计算 ====================
+    function haversineDist(lat1, lon1, lat2, lon2) {
+        const R = 3440.065;
+        const dLat = (lat2 - lat1) * Math.PI/180, dLon = (lon2 - lon1) * Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    function bearingRhumbLine(lat1, lon1, lat2, lon2) {
+        const p1 = mercatorXY(lat1, lon1), p2 = mercatorXY(lat2, lon2);
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        return (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+    }
+
+    function moveRhumbLine(lat, lon, course, dist) {
+        const R = 3440.065;
+        const φ1 = lat * Math.PI/180, θ = course * Math.PI/180;
+        const d = dist / R;
+        const φ2 = φ1 + d * Math.cos(θ);
+        const φ_m = (φ1 + φ2) / 2;
+        const λ2 = (lon * Math.PI/180) + d * Math.sin(θ) / Math.cos(φ_m);
+        let newLat = φ2 * 180 / Math.PI;
+        let newLon = λ2 * 180 / Math.PI;
+        newLat = Math.min(latMax, Math.max(latMin, newLat));
+        newLon = Math.max(lonMin, Math.min(lonMax, newLon));
+        return { lat: newLat, lon: newLon };
+    }
+
+    function formatLat(lat) {
+        const d = Math.abs(lat), deg = Math.floor(d), min = (d-deg)*60;
+        return `${deg}°${min.toFixed(1)}' ${lat>=0?'N':'S'}`;
+    }
+
+    function formatLon(lon) {
+        let display = lon, dir = 'E';
+        if (display > 180) { display = 360 - display; dir = 'W'; }
+        else if (display < 0) { display = -display; dir = 'W'; }
+        const d = Math.abs(display), deg = Math.floor(d), min = (d-deg)*60;
+        return `${deg}°${min.toFixed(1)}' ${dir}`;
+    }
+
+    function formatTime(hours) {
+        if (!isFinite(hours) || hours <= 0) return '--';
+        const days = Math.floor(hours / 24);
+        const h = Math.floor(hours % 24);
+        const m = Math.round((hours * 60) % 60);
+        
+        let str = '';
+        if (days > 0) str += `${days}天 `;
+        if (h > 0 || days > 0) str += `${h}小时 `;
+        str += `${m}分钟`;
+        return str;
+    }
+
+    // ==================== 数据与状态 ====================
+    let startPoint = { lat: 35.0, lon: 140.0 };
+    let endPoint   = { lat: 20.0, lon: 220.0 };
+    let waypoints  = [];
+
+    let ship = { lat: 35.0, lon: 140.0, course: 0, trail: [], arrived: false, speed: 30 };
+    let speed = 30;
+    let running = false;
+    let simInterval = null;
+    let isAddMode = true;
+
+    let dragging = null;
+    let suppressNextClick = false;
+    let currentWpIndex = 1;
+
+    function getRoute() { return [startPoint, ...waypoints, endPoint]; }
+
+    // ==================== 同步与表格更新 ====================
+    function syncInputs() {
+        startLatInput.value = startPoint.lat.toFixed(1);
+        startLonInput.value = startPoint.lon.toFixed(1);
+        endLatInput.value   = endPoint.lat.toFixed(1);
+        endLonInput.value   = endPoint.lon.toFixed(1);
+    }
+
+    function syncShipToStart() {
+        if (running) return;
+        ship.lat = startPoint.lat;
+        ship.lon = startPoint.lon;
+        ship.trail = [{lat: ship.lat, lon: ship.lon}];
+        ship.arrived = false;
+        currentWpIndex = 1;
+        hasStarted = false;
+    }
+
+    function updateWaypointTable() {
+        const route = getRoute();
+        let html = '';
+        let totalDist = 0;
+        let totalTime = 0;
+
+        for (let i = 0; i < route.length; i++) {
+            const p = route[i];
+            let courseStr = '--', distStr = '--', timeStr = '--';
+
+            if (i < route.length - 1) {
+                const next = route[i + 1];
+                const dist = haversineDist(p.lat, p.lon, next.lat, next.lon);
+                courseStr = bearingRhumbLine(p.lat, p.lon, next.lat, next.lon).toFixed(1) + '°';
+                distStr   = dist.toFixed(1) + ' nm';
+                
+                totalDist += dist;
+                if (speed > 0) {
+                    const timeH = dist / speed;
+                    totalTime += timeH;
+                    timeStr = formatTime(timeH);
+                }
+            } else {
+                courseStr = '终点';
+            }
+
+            const isStart  = (i === 0);
+            const isEnd    = (i === route.length - 1);
+            const isMiddle = !isStart && !isEnd;
+
+            const isCurrent = (i === currentWpIndex - 1 && running);
+            let rowStyle = isCurrent ? 'style="background:#c8e6c9;"' : '';
+
+            let rowClass = 'row-label';
+            if (isStart) rowClass += ' row-start';
+            if (isEnd)   rowClass += ' row-end';
+
+            let numLabel = isStart ? '出发点' : (isEnd ? '到达点' : i);
+
+            let delCell = '—';
+            if (isMiddle) {
+                delCell = `<button class="del-btn" data-wp="${i - 1}" title="删除该分点">✕</button>`;
+            }
+
+            html += `<tr ${rowStyle}>
+                <td class="${rowClass}">${numLabel}</td>
+                <td>${formatLat(p.lat)}</td>
+                <td>${formatLon(p.lon)}</td>
+                <td>${courseStr}</td>
+                <td>${distStr}</td>
+                <td>${timeStr}</td>
+                <td>${delCell}</td>
+            </tr>`;
+        }
+        
+        html += `<tr class="row-total">
+            <td colspan="4" style="text-align:right;">总计：</td>
+            <td>${totalDist.toFixed(1)} nm</td>
+            <td>${speed > 0 ? formatTime(totalTime) : '--'}</td>
+            <td>—</td>
+        </tr>`;
+
+        waypointList.innerHTML = html;
+    }
+
+    waypointList.addEventListener('click', function(e) {
+        const btn = e.target.closest('.del-btn');
+        if (!btn) return;
+        const wpIdx = parseInt(btn.dataset.wp, 10);
+        if (isNaN(wpIdx) || wpIdx < 0 || wpIdx >= waypoints.length) return;
+        waypoints.splice(wpIdx, 1);
+        const route = getRoute();
+        if (currentWpIndex >= route.length) currentWpIndex = route.length - 1;
+        if (currentWpIndex < 1) currentWpIndex = 1;
+        syncShipToStart();
+        drawChart();
+    });
+
+    // ==================== 多边形标记 ====================
+    function drawPolygonMarker(lat, lon, sides, radius, rotation, fillColor, strokeColor, letter) {
+        const p = mercatorXY(lat, lon);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(rotation);
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const a = -Math.PI/2 + i * 2 * Math.PI / sides;
+            const x = Math.cos(a) * radius;
+            const y = Math.sin(a) * radius;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = 6;
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.rotate(-rotation);
+        if (letter) {
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(letter, 0, 0.5);
+        }
+        ctx.restore();
+    }
+
+    // ==================== 绘制海图 ====================
+    function drawChart() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = COLOR_SEA;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(leftMargin, top, mapW, mapH);
+        ctx.clip();
+
+        // 1. 底图绘制
+        if (useBaseMap) {
+            if (currentBgImg) {
+                ctx.drawImage(currentBgImg, leftMargin, top, mapW, mapH);
+            } else {
+                drawLand();
+                ctx.fillStyle = '#000'; ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('当前无底图，请上传或使用矢量图', W/2, H/2);
+            }
+        } else {
+            drawLand();
+            // 动态经纬网
+            let step = (lonMax - lonMin) > 90 ? 15 : 10;
+            ctx.strokeStyle = 'rgba(90,140,180,0.55)';
+            ctx.lineWidth = 1;
+            for (let lon = Math.ceil(lonMin/step)*step; lon <= lonMax; lon += step) {
+                const p = mercatorXY(latMin, lon);
+                ctx.beginPath(); ctx.moveTo(p.x, top); ctx.lineTo(p.x, top + mapH); ctx.stroke();
+            }
+            for (let lat = Math.ceil(latMin/step)*step; lat <= latMax; lat += step) {
+                const p = mercatorXY(lat, lonMin);
+                ctx.beginPath(); ctx.moveTo(leftMargin, p.y); ctx.lineTo(leftMargin + mapW, p.y); ctx.stroke();
+            }
+            
+            // 北太平洋专属关键点
+            if (lonMin === 100 && latMin === 0) {
+                drawRefPoints();
+            }
+            // 上海（只要在范围内就画）
+            if (121.5 >= lonMin && 121.5 <= lonMax && 31.2 >= latMin && 31.2 <= latMax) {
+                drawShanghai();
+            }
+        }
+
+        // 2. 用户航线折线
+        const route = getRoute();
+        if (waypoints.length > 0) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(160,0,200,0.85)';
+            ctx.lineWidth = 2.5;
+            route.forEach((pt, i) => {
+                const p = mercatorXY(pt.lat, pt.lon);
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.stroke();
+        }
+
+        // 3. 中间分点
+        waypoints.forEach((pt, i) => {
+            const p = mercatorXY(pt.lat, pt.lon);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ff8800';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('P' + (i + 1), p.x + 8, p.y - 5);
+        });
+
+        // 4. 起终点多边形
+        const sp = mercatorXY(startPoint.lat, startPoint.lon);
+        drawPolygonMarker(startPoint.lat, startPoint.lon, 3, 10, 0, '#2e7d32', '#0d3d12', 'S');
+        ctx.fillStyle = '#1a3a5c';
+        ctx.font = 'bold 11px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('起点', sp.x, sp.y + 13);
+
+        const ep = mercatorXY(endPoint.lat, endPoint.lon);
+        drawPolygonMarker(endPoint.lat, endPoint.lon, 4, 9.5, 0, '#c62828', '#5a0000', 'E');
+        ctx.fillStyle = '#1a3a5c';
+        ctx.font = 'bold 11px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('终点', ep.x, ep.y + 13);
+
+        // 5. 船舶轨迹与船舶
+        if (hasStarted) {
+            if (ship.trail.length > 1) {
+                ctx.strokeStyle = 'rgba(204,0,0,0.45)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ship.trail.forEach((pt, i) => {
+                    const p = mercatorXY(pt.lat, pt.lon);
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                });
+                ctx.stroke();
+            }
+
+            const p = mercatorXY(ship.lat, ship.lon);
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(ship.course * Math.PI / 180);
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 5.5, 13, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#cc0000'; ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 1.2; ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -15.5);
+            ctx.quadraticCurveTo(-5, -11, -4, -7);
+            ctx.lineTo(4, -7);
+            ctx.quadraticCurveTo(5, -11, 0, -15.5);
+            ctx.fillStyle = '#cc0000'; ctx.fill(); ctx.stroke();
+            ctx.restore();
+        }
+
+        ctx.restore();
+
+        // 图框与刻度
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(leftMargin, top, mapW, mapH);
+
+        ctx.fillStyle = '#222';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        let step = (lonMax - lonMin) > 90 ? 15 : 10;
+        for (let lon = Math.ceil(lonMin/step)*step; lon <= lonMax; lon += step) {
+            const p = mercatorXY(latMin, lon);
+            let label;
+            if (lon > 180) label = (360 - lon) + '°W';
+            else if (lon < 0) label = (-lon) + '°W';
+            else label = lon + '°E';
+            ctx.fillText(label, p.x, top + mapH + 5);
+        }
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let lat = Math.ceil(latMin/step)*step; lat <= latMax; lat += step) {
+            const p = mercatorXY(lat, lonMin);
+            ctx.fillText(lat + '°N', leftMargin - 8, p.y);
+        }
+
+        updateWaypointTable();
+    }
+
+    // ==================== 区域设置逻辑 ====================
+    btnUpdateBounds.addEventListener('click', function() {
+        const nLonMin = parseFloat(boundLonMinInput.value);
+        const nLonMax = parseFloat(boundLonMaxInput.value);
+        const nLatMin = parseFloat(boundLatMinInput.value);
+        const nLatMax = parseFloat(boundLatMaxInput.value);
+
+        if (nLonMax <= nLonMin || nLatMax <= nLatMin) {
+            alert('范围设置错误：最大值必须大于最小值！');
+            return;
+        }
+
+        lonMin = nLonMin; lonMax = nLonMax;
+        latMin = nLatMin; latMax = nLatMax;
+
+        drawChart();
+    });
+
+    // 加载本地底图函数（修复：找不到文件时不清空当前图片）
+    function loadBgImage(imgName) {
+        const img = new Image();
+        img.src = imgName;
+        img.onload = function() {
+            currentBgImg = img; // 成功则替换
+            useBaseMap = true;
+            btnToggleMap.classList.add('active');
+            btnToggleMap.textContent = '🖼️ 矢量底图';
+            drawChart();
+        };
+        img.onerror = function() {
+            // 加载失败（没找到本地文件）
+            console.log('未找到本地预设图：' + imgName);
+            // 【修复重点】：绝对不要写 currentBgImg = null;
+            // 如果当前是矢量图，则保持矢量图；如果当前有上传的图，则保留它。
+            if (!currentBgImg) {
+                useBaseMap = false;
+                btnToggleMap.classList.remove('active');
+                btnToggleMap.textContent = '🖼️ 真实底图';
+            }
+            drawChart();
+        };
+    }
+
+    // 预设按钮
+    window.setPreset = function(type) {
+        if (type === 'pac') {
+            boundLonMinInput.value = 100;
+            boundLonMaxInput.value = 282;
+            boundLatMinInput.value = 0;
+            boundLatMaxInput.value = 60;
+            startPoint = { lat: 35.0, lon: 140.0 };
+            endPoint   = { lat: 20.0, lon: 220.0 };
+            waypoints = [];
+            loadBgImage('bg_pacific.png'); // 自动加载北太平洋底图
+        } else if (type === 'eurasia') {
+            boundLonMinInput.value = -20;
+            boundLonMaxInput.value = 150;
+            boundLatMinInput.value = 0;
+            boundLatMaxInput.value = 60;
+            startPoint = { lat: 31.2, lon: 121.5 };
+            endPoint   = { lat: 51.9, lon: 4.5 };
+            waypoints = [];
+            loadBgImage('bg_eurasia.png'); // 自动加载欧亚底图
+        } else if (type === 'atlantic') {
+            boundLonMinInput.value = -70;
+            boundLonMaxInput.value = 10;
+            boundLatMinInput.value = 32;
+            boundLatMaxInput.value = 65;
+            startPoint = { lat: 52.7, lon: -10.8 };
+            endPoint   = { lat: 44.0, lon: -55.2 };
+            waypoints = [];
+            loadBgImage('bg_atlantic.png'); // 自动加载北大西洋底图
+        }
+        
+        syncInputs();
+        resetToStart();
+        btnUpdateBounds.click(); // 应用范围并重绘
+    };
+
+    // ==================== 模拟步进 ====================
+    function stepShips() {
+        if (!running) return;
+        const route = getRoute();
+        if (route.length < 2) { stopShips(); return; }
+        if (currentWpIndex >= route.length) { stopShips(); return; }
+
+        const target = route[currentWpIndex];
+        const distToTarget = haversineDist(ship.lat, ship.lon, target.lat, target.lon);
+        const stepHours = 0.05;
+        const dist = ship.speed * stepHours;
+
+        if (distToTarget < dist || distToTarget < 0.5) {
+            ship.lat = target.lat;
+            ship.lon = target.lon;
+            currentWpIndex++;
+            if (currentWpIndex >= route.length) {
+                ship.arrived = true;
+                ship.trail.push({lat: ship.lat, lon: ship.lon});
+                stopShips();
+                drawChart();
+                return;
+            }
+        } else {
+            const brg = bearingRhumbLine(ship.lat, ship.lon, target.lat, target.lon);
+            ship.course = brg;
+            const newPos = moveRhumbLine(ship.lat, ship.lon, brg, dist);
+            ship.lat = newPos.lat;
+            ship.lon = newPos.lon;
+        }
+
+        ship.trail.push({lat: ship.lat, lon: ship.lon});
+        if (ship.trail.length > 4000) ship.trail.shift();
+        drawChart();
+    }
+
+    // ==================== 控制函数 ====================
+    function startShips() {
+        const route = getRoute();
+        if (running || route.length < 2) return;
+
+        if (ship.arrived || currentWpIndex >= route.length) {
+            ship.lat = startPoint.lat;
+            ship.lon = startPoint.lon;
+            ship.trail = [{lat: ship.lat, lon: ship.lon}];
+            ship.arrived = false;
+            currentWpIndex = 1;
+        }
+
+        hasStarted = true;
+        running = true;
+        btnStart.textContent = '▶ 运行中';
+        if (simInterval) clearInterval(simInterval);
+        simInterval = setInterval(stepShips, 200);
+        drawChart();
+    }
+
+    function stopShips() {
+        running = false;
+        if (simInterval) { clearInterval(simInterval); simInterval = null; }
+        btnStart.textContent = '▶ 启动';
+        drawChart();
+    }
+
+    function resetToStart() {
+        stopShips();
+        ship.lat = startPoint.lat;
+        ship.lon = startPoint.lon;
+        ship.course = 0;
+        ship.trail = [{lat: ship.lat, lon: ship.lon}];
+        ship.arrived = false;
+        currentWpIndex = 1;
+        hasStarted = false;
+        drawChart();
+    }
+
+    function clearRoute() {
+        stopShips();
+        waypoints = [];
+        ship.trail = [];
+        ship.arrived = false;
+        currentWpIndex = 1;
+        hasStarted = false;
+        drawChart();
+    }
+
+    // ==================== 交互 ====================
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    }
+
+    function isPointHit(lat, lon, mx, my, r) {
+        const p = mercatorXY(lat, lon);
+        const dx = p.x - mx, dy = p.y - my;
+        return (dx*dx + dy*dy) <= r*r;
+    }
+
+    function hitTest(pos) {
+        if (isPointHit(startPoint.lat, startPoint.lon, pos.x, pos.y, 13)) return { type: 'start' };
+        if (isPointHit(endPoint.lat, endPoint.lon, pos.x, pos.y, 13)) return { type: 'end' };
+        for (let i = 0; i < waypoints.length; i++) {
+            if (isPointHit(waypoints[i].lat, waypoints[i].lon, pos.x, pos.y, 11)) {
+                return { type: 'wp', index: i };
+            }
+        }
+        return null;
+    }
+
+    canvas.addEventListener('pointerdown', function(e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        const pos = getMousePos(e);
+        const hit = hitTest(pos);
+
+        if (hit) {
+            dragging = hit;
+            suppressNextClick = true;
+            try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+        } else {
+            suppressNextClick = false;
+        }
+    });
+
+    canvas.addEventListener('pointermove', function(e) {
+        if (!dragging) return;
+        const pos = getMousePos(e);
+        const geo = inverseMercator(pos.x, pos.y);
+
+        if (dragging.type === 'start') {
+            startPoint.lat = geo.lat;
+            startPoint.lon = geo.lon;
+        } else if (dragging.type === 'end') {
+            endPoint.lat = geo.lat;
+            endPoint.lon = geo.lon;
+        } else if (dragging.type === 'wp') {
+            waypoints[dragging.index].lat = geo.lat;
+            waypoints[dragging.index].lon = geo.lon;
+        }
+
+        syncInputs();
+        if (dragging.type === 'wp') syncShipToStart();
+        drawChart();
+    });
+
+    function endDrag(e) {
+        if (dragging) {
+            dragging = null;
+            try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+            drawChart();
+        }
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    canvas.addEventListener('click', function(e) {
+        if (suppressNextClick) { suppressNextClick = false; return; }
+        if (!isAddMode) return;
+
+        const pos = getMousePos(e);
+        if (pos.x < leftMargin || pos.x > leftMargin + mapW ||
+            pos.y < top || pos.y > top + mapH) return;
+
+        const geo = inverseMercator(pos.x, pos.y);
+        waypoints.push({ lat: geo.lat, lon: geo.lon });
+
+        if (!running) {
+            ship.arrived = false;
+            currentWpIndex = Math.min(currentWpIndex, getRoute().length - 1);
+        }
+        drawChart();
+    });
+
+    canvas.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        if (isAddMode) return;
+        const pos = getMousePos(e);
+        const geo = inverseMercator(pos.x, pos.y);
+
+        const route = getRoute();
+        if (route.length > 0) {
+            let minDist = Infinity, nearestIdx = 0;
+            route.forEach((pt, i) => {
+                const d = haversineDist(geo.lat, geo.lon, pt.lat, pt.lon);
+                if (d < minDist) { minDist = d; nearestIdx = i; }
+            });
+            ship.lat = geo.lat;
+            ship.lon = geo.lon;
+            ship.course = bearingRhumbLine(geo.lat, geo.lon,
+                                           route[nearestIdx].lat,
+                                           route[nearestIdx].lon);
+            ship.trail = [{lat: ship.lat, lon: ship.lon}];
+            ship.arrived = false;
+            currentWpIndex = Math.max(1, nearestIdx);
+            hasStarted = true;
+            drawChart();
+        }
+    });
+
+    // ==================== 输入框绑定 ====================
+    function bindEndpointInput(inputEl, key, isLat) {
+        inputEl.addEventListener('input', function() {
+            let v = parseFloat(this.value);
+            if (isNaN(v)) return;
+            
+            if (isLat) v = Math.max(latMin, Math.min(latMax, v));
+            else       v = Math.max(lonMin, Math.min(lonMax, v));
+
+            const isStart = this.id.startsWith('start');
+            const target = isStart ? startPoint : endPoint;
+            target[key] = v;
+
+            if (isStart) syncShipToStart();
+            drawChart();
+        });
+    }
+    bindEndpointInput(startLatInput, 'lat', true);
+    bindEndpointInput(startLonInput, 'lon', false);
+    bindEndpointInput(endLatInput,   'lat', true);
+    bindEndpointInput(endLonInput,   'lon', false);
+
+    // ==================== 上传底图与切换 ====================
+    btnUpload.addEventListener('click', () => bgUpload.click());
+    
+    bgUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                currentBgImg = img; // 覆盖当前底图
+                useBaseMap = true;
+                btnToggleMap.classList.add('active');
+                btnToggleMap.textContent = '🖼️ 矢量底图';
+                drawChart();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    btnToggleMap.addEventListener('click', function() {
+        if (useBaseMap) {
+            useBaseMap = false;
+            this.classList.remove('active');
+            this.textContent = '🖼️ 真实底图';
+        } else {
+            if (currentBgImg) {
+                useBaseMap = true;
+                this.classList.add('active');
+                this.textContent = '🖼️ 矢量底图';
+            } else {
+                alert('当前未加载底图，请点击“上传底图”或选择预设区域。');
+                return;
+            }
+        }
+        drawChart();
+    });
+
+    // ==================== 进阶工具功能 ====================
+    
+    // 1. 保存路线
+    btnSave.addEventListener('click', function() {
+        const data = {
+            start: startPoint,
+            end: endPoint,
+            waypoints: waypoints,
+            speed: speed,
+            bounds: { lonMin, lonMax, latMin, latMax }
+        };
+        try {
+            localStorage.setItem('north_pacific_route_data', JSON.stringify(data));
+            alert('✅ 航线已成功保存到浏览器本地！');
+        } catch (err) {
+            alert('保存失败：浏览器可能不支持或空间已满。');
+        }
+    });
+
+    // 2. 读取路线
+    btnLoad.addEventListener('click', function() {
+        const raw = localStorage.getItem('north_pacific_route_data');
+        if (!raw) {
+            alert('⚠️ 本地没有保存过航线数据，请先规划并点击保存。');
+            return;
+        }
+        try {
+            const data = JSON.parse(raw);
+            startPoint = data.start;
+            endPoint = data.end;
+            waypoints = data.waypoints || [];
+            speed = data.speed || 30;
+            
+            if (data.bounds) {
+                lonMin = data.bounds.lonMin; lonMax = data.bounds.lonMax;
+                latMin = data.bounds.latMin; latMax = data.bounds.latMax;
+                boundLonMinInput.value = lonMin;
+                boundLonMaxInput.value = lonMax;
+                boundLatMinInput.value = latMin;
+                boundLatMaxInput.value = latMax;
+            }
+
+            speedInput.value = speed;
+            ship.speed = speed;
+            
+            syncInputs();
+            resetToStart();
+            alert('✅ 航线读取成功！');
+        } catch (err) {
+            alert('读取失败：数据格式可能已损坏。');
+        }
+    });
+
+    // 3. 导出图片
+    btnExport.addEventListener('click', function() {
+        const originalText = this.textContent;
+        this.textContent = '⏳ 正在生成...';
+        this.disabled = true;
+        
+        setTimeout(() => {
+            try {
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = '航线规划_' + new Date().getTime() + '.png';
+                link.href = dataUrl;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.textContent = '✅ 导出成功';
+            } catch (err) {
+                console.error('导出失败:', err);
+                alert('由于浏览器安全限制，直接下载失败。为您在新标签页打开图片，请在图片上右键选择“图片另存为...”');
+                
+                const newWin = window.open();
+                if (newWin) {
+                    newWin.document.write('<html><head><title>导出图片</title></head><body style="margin:0;"><img src="' + canvas.toDataURL('image/png') + '" style="max-width:100%;" /></body></html>');
+                } else {
+                    alert('弹窗被拦截，请允许弹窗后重试。');
+                }
+            } finally {
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.disabled = false;
+                }, 2000);
+            }
+        }, 100);
+    });
+
+    // ==================== 其他按钮事件 ====================
+    btnAddWp.addEventListener('click', function() {
+        isAddMode = !isAddMode;
+        btnAddWp.classList.toggle('active', isAddMode);
+        btnAddWp.textContent = isAddMode ? '✏️ 添加航路点' : '✏️ 添加航路点（关闭）';
+        canvas.style.cursor = isAddMode ? 'crosshair' : 'default';
+    });
+
+    btnStart.addEventListener('click', startShips);
+    btnStop.addEventListener('click', stopShips);
+    btnReset.addEventListener('click', resetToStart);
+    btnClear.addEventListener('click', clearRoute);
+
+    speedInput.addEventListener('input', function() {
+        const v = parseFloat(this.value) || 0;
+        speed = Math.min(200, Math.max(0, v));
+        ship.speed = speed;
+        drawChart();
+    });
+
+    btnRefPoints.addEventListener('click', function() {
+        const isHidden = refPointsPanel.style.display === 'none' || refPointsPanel.style.display === '';
+        refPointsPanel.style.display = isHidden ? 'block' : 'none';
+        this.classList.toggle('active', isHidden);
+    });
+
+    refPointsTable.innerHTML = refPoints.map(p => `
+        <tr>
+            <td><b>${p.name}</b></td>
+            <td>${p.desc}</td>
+            <td>${formatLat(p.lat)}</td>
+            <td>${formatLon(p.lon)}</td>
+        </tr>
+    `).join('');
+
+    // ==================== 初始化 ====================
+    syncInputs();
+    ship.lat = startPoint.lat;
+    ship.lon = startPoint.lon;
+    ship.trail = [{lat: ship.lat, lon: ship.lon}];
+    drawChart();
+    window.addEventListener('resize', drawChart);
+})();
+</script>
+</body>
+</html>
