@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>航线设计</title>
+    <title>墨卡托海图 ·航线设计</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -77,6 +77,57 @@
         .map-bounds-panel button:hover { background: #2980b9; }
         .map-bounds-panel button.preset { background: #7f8c8d; }
         .map-bounds-panel button.preset:hover { background: #95a5a6; }
+        .map-bounds-panel button.preset-work { background: #e67e22; }
+        .map-bounds-panel button.preset-work:hover { background: #d35400; }
+
+        /* 风流预配面板 */
+        .weather-panel {
+            width: 100%; background: #e1f5fe; border: 1px solid #81d4fa;
+            border-radius: 6px; padding: 6px 12px; margin-bottom: 8px;
+            display: none; flex-wrap: wrap; gap: 6px 12px;
+            align-items: center; font-size: 13px;
+        }
+        .weather-panel label { font-weight: 600; color: #0277bd; }
+        .weather-panel input[type="number"] {
+            width: 65px; padding: 2px 4px; border: 1px solid #81d4fa;
+            border-radius: 4px; font-size: 13px; text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        .weather-panel button {
+            padding: 3px 12px; background: #0288d1; border: none; color: #fff;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        .weather-panel button:hover { background: #01579b; }
+        
+        /* 航向调节器 */
+        .helm-control {
+            display: flex; align-items: center; gap: 4px;
+            background: #fff; border: 1px solid #81d4fa; border-radius: 4px;
+            padding: 2px 6px; margin-left: 10px;
+        }
+        .helm-control button {
+            background: #0288d1; padding: 2px 8px; font-size: 14px;
+        }
+        .helm-control input {
+            width: 55px !important; border: none !important; font-weight: bold;
+            color: #d32f2f !important;
+        }
+
+        /* 风流结果表格 */
+        .weather-table-panel {
+            width: 100%; background: #fffde7; border: 1px solid #fbc02d;
+            border-radius: 6px; padding: 6px; margin-bottom: 8px;
+            display: none; max-height: 150px; overflow-y: auto;
+        }
+        .weather-table-panel table {
+            width: 100%; border-collapse: collapse; font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        .weather-table-panel th, .weather-table-panel td {
+            padding: 3px 6px; text-align: center;
+            border: 1px solid #e0e0e0; white-space: nowrap;
+        }
+        .weather-table-panel th { background: #fff59d; color: #333; }
 
         .waypoint-panel {
             width: 100%; background: #f5f9ff; border: 1px solid #b0c8dd;
@@ -226,16 +277,17 @@
 </head>
 <body>
 <div class="chart-container">
-    <div class="chart-title">🌍 墨卡托海图 · 航线设计</div>
+    <div class="chart-title">🌍 墨卡托海图 · 航线设计/海图作业 </div>
 
     <details class="help-box">
         <summary>📖 使用说明（点击展开 / 收起）</summary>
         <div class="help-content">
-            <p><b>提示：本小程序可用于在墨卡托海图上进行航线设计、海图作业练习，生成的内容仅供参考。</b></p>
-            <p><b>💡 核心功能：</b>本海图支持<b>任意海域范围</b>切换。</p>
-            <p><b>1. 预设推荐航线图</b>：点击预设会自动加载同目录下对应的推荐航线图（北太平洋 、欧亚 、北大西洋 ）。航线图/矢量图可相互切换。也可随时上传其它海图”替换当前图片。</p>
-            <p><b>2. 航线设计</b>：选择预设海域（加载推荐航线图)，在始终点之间点击添加分点。始终点和各分点可任意移动“💾 保存路线”可将起终点、分点、航速存至浏览器。</p>
-            <p><b>3. 导出图片</b>：点击“🖨️ 导出图片”，将当前底图和航线保存为高清 PNG。</p>
+            <p><b>本小程序用于航线设计和海图作业练习，生成的内容仅供参考</b></p>
+            <p><b>💡 核心功能：</b>本海图支持<b>任意海域范围</b>切换。内置矢量海岸线包括：北太平洋、亚非欧海域及北大西洋。</p>
+             <p><b>1.设置海图范围</b>：可上传相同（经纬度)范围的墨卡托海图。</p>
+             <p><b>2. 预设与航线图</b>：点击预设会自动加载同目录下的航线图，在航线图上点击设各分点，显示各航段航向航程。</p>
+            <p><b>3. 航线设计</b>：可以设定起点和终点，通过点击图上任意点设分点。起终点和分点可随意拖动。</p>
+            <p><b>4. 海图作业</b>：点击“海图作业”预设后，输入流速流向，点击“确定”获得预配真航向。通过“手操舵”调整船的航向(TC)。</p>
         </div>
     </details>
 
@@ -279,6 +331,7 @@
         <button class="preset" onclick="setPreset('pac')">北太平洋</button>
         <button class="preset" onclick="setPreset('eurasia')">欧亚航线</button>
         <button class="preset" onclick="setPreset('atlantic')">北大西洋</button>
+        <button class="preset preset-work" onclick="setPreset('chartwork')">海图作业</button>
     </div>
 
     <!-- ===== 航路点列表 ===== -->
@@ -294,10 +347,43 @@
         </table>
     </div>
 
+    <!-- ===== 风流预配参数面板 ===== -->
+    <div class="weather-panel" id="weatherPrepanel">
+        <span style="font-weight:bold; color:#0277bd;">⚓ 风流预配作业：</span>
+        <label>船速(kn)</label> <input type="number" id="calcVL" value="12" step="0.1">
+        <label>流向</label> <input type="number" id="calcCurrentDir" value="90" step="1">
+        <label>流速(kn)</label> <input type="number" id="calcCurrentSpd" value="2" step="0.1">
+        <button id="btnCalcWeather">确定</button>
+        
+        <!-- 航向手动调节器 -->
+        <div class="helm-control" id="helmControl" style="display:none;">
+            <span style="font-weight:bold; color:#0277bd; margin-right:4px;">手操舵 TC:</span>
+            <button onclick="adjustTC(-1)">◀ 左转</button>
+            <input type="number" id="currentTC" value="0" step="1">
+            <button onclick="adjustTC(1)">右转 ▶</button>
+        </div>
+    </div>
+
+    <!-- ===== 风流预配结果表格 ===== -->
+    <div class="weather-table-panel" id="weatherTablePanel">
+        <table>
+            <thead>
+                <tr>
+                    <th>航段</th>
+                    <th>计划航向 (CA)</th>
+                    <th>预配真航向 (TC)</th>
+                    <th>流压差 (β)</th>
+                    <th>对地航速 (VG)</th>
+                </tr>
+            </thead>
+            <tbody id="weatherTableBody"></tbody>
+        </table>
+    </div>
+
     <!-- ===== 海图画布 ===== -->
     <div class="canvas-wrapper">
         <canvas id="chartCanvas" width="820" height="380"></canvas>
-        
+       
         <!-- 推荐航线关键点浮层 -->
         <div class="ref-points-panel" id="refPointsPanel">
             <div class="title">📋 北太平洋关键点</div>
@@ -362,29 +448,53 @@
     const endLatInput   = document.getElementById('endLat');
     const endLonInput   = document.getElementById('endLon');
 
-    // 边界输入框
     const boundLonMinInput = document.getElementById('boundLonMin');
     const boundLonMaxInput = document.getElementById('boundLonMax');
     const boundLatMinInput = document.getElementById('boundLatMin');
     const boundLatMaxInput = document.getElementById('boundLatMax');
     const btnUpdateBounds  = document.getElementById('btnUpdateBounds');
 
-    // ==================== 地图参数 (动态) ====================
+    // 风流面板 DOM
+    const weatherPrepanel = document.getElementById('weatherPrepanel');
+    const weatherTablePanel = document.getElementById('weatherTablePanel');
+    const weatherTableBody = document.getElementById('weatherTableBody');
+    const btnCalcWeather = document.getElementById('btnCalcWeather');
+    const helmControl = document.getElementById('helmControl');
+    const currentTCInput = document.getElementById('currentTC');
+
+    // ==================== 地图参数 ====================
     const W = 820, H = 380;
     const mapW = 758, mapH = 316;
     const leftMargin = 31, rightMargin = 31, top = 31, bottom = 33;
 
-    // 默认北太平洋
     let lonMin = 100, lonMax = 282, latMin = 0, latMax = 60;
 
     const COLOR_LAND_FILL   = '#f5e8b8';
     const COLOR_LAND_STROKE = '#a89050';
     const COLOR_SEA         = '#f0f8ff';
 
-    // 核心状态：当前使用的底图图片对象、是否处于底图模式
-    let currentBgImg = null;
-    let useBaseMap = false;
+    // ==================== 核心状态 ====================
+    let currentBgUrl = ''; 
+    let bgLoadedImg = null; 
+    let useBaseMap = false; 
     let hasStarted = false;
+    
+    // 风流预配状态
+    let isChartworkMode = false;
+    let weatherPreplanResults = null;
+
+    // ==================== 坐标轴间距自动计算 ====================
+    function getGridStep(span) {
+        if (span > 90) return 15;
+        if (span > 45) return 10;
+        if (span > 20) return 5;
+        if (span > 5) return 1;
+        if (span > 2) return 0.5;
+        if (span > 1) return 0.2;
+        if (span > 0.5) return 0.1;
+        if (span > 0.1) return 0.05;
+        return 0.01;
+    }
 
     // ==================== 墨卡托投影 ====================
     function mercY(phi) { return Math.log(Math.tan(Math.PI/4 + phi/2)); }
@@ -410,9 +520,8 @@
         return {lat, lon};
     }
 
-    // ==================== 陆地多边形 (含欧亚及北美洲东岸) ====================
+    // ==================== 陆地多边形 (保持原样) ====================
     const landPolys = [
-        // 1. 亚欧大陆主体 (包含欧洲及地中海)
         [
             [172,63],[169,62],[167,61],[165,60],[163.5,58.5],[163,57],[162.5,55],[161,53],[159.5,51.5],
             [158,51],[156.5,51.5],[155.5,53],[155,55],[155.5,57],[156.5,58.5],[157.5,59.5],
@@ -423,85 +532,53 @@
             [121,30],[120,28],[118,25.5],[116,23],[113,22],[110,21],[108,19],[107,17.5],
             [108.5,16],[109,15],[108,13],[107,11],[105.5,9],[104,8],[102,6],[101,4],
             [103,2],[104,1],[102,1],[100,3],[99,6],[98,9],[98,12],[99,14],[100,16],
-            
-            // 亚洲南部、印度、中东
             [99, 10], [98, 6], [96, 4], [94, 15], [91, 21], [88, 21], [80, 15], [77, 8], [73, 15], [70, 23], [66, 25], [61, 25], [57, 24], [56, 22], [52, 18], [48, 14], [45, 13], [43, 12], 
-            // 中东、地中海东岸
             [39, 15], [36, 23], [34, 28], [33, 31], [35, 33], [36, 36], [32, 36], [30, 37], [26, 38], [23, 40], [24, 41], [26, 41], [28, 41], 
-            // 黑海、里海、高加索
             [29, 45], [34, 46], [38, 47], [41, 42], [48, 42], [50, 45], [55, 45],
-            // 欧洲轮廓
             [48, 46], [40, 46], [35, 46], [30, 46], [28, 45], [28, 41], [24, 41], [23, 40], [22, 37], [20, 39], [16, 41],
             [18, 40], [15, 38], [12, 44], [8, 44], [3, 43], [-2, 43], [-9, 43], [-9, 37], [-5, 36],
             [-1, 46], [-4, 48], [0, 50], [2, 51], [5, 53], [8, 55], [8, 57], [10, 58], [5, 58], [5, 62], [15, 68], [25, 70], [30, 70],
             [60, 70], [100, 76], [130, 73], [172, 63]
         ],
-        // 2. 非洲大陆
         [
             [33, 31], [34, 28], [37, 22], [39, 15], [43, 11], [49, 11], [51, 0],
             [-16, 0], [-17, 15], [-13, 27], [-10, 30], [-6, 36], [-2, 37],
             [10, 34], [19, 31], [29, 31], [33, 31]
         ],
-        // 3. 英国
         [[2, 51], [0, 53], [-2, 56], [-3, 58], [-5, 58], [-6, 55], [-5, 53], [-3, 51]],
-        // 4. 爱尔兰
         [[-10, 51], [-6, 52], [-6, 55], [-10, 54], [-10, 51]],
-        // 5. 斯里兰卡
         [[80, 9], [82, 7], [81, 6], [79, 8], [80, 9]],
-        // 6. 西西里岛
         [[13, 38], [15, 37], [15, 38], [13, 38]],
-        // 7. 撒丁岛
         [[8, 39], [9, 41], [9, 41], [8, 39]],
-        // 8. 科西嘉岛
         [[8, 42], [9, 43], [9, 42], [8, 42]],
-        // 9. 克里特岛
         [[23, 35], [26, 35], [26, 35.5], [23, 35.5]],
-        // 10. 塞浦路斯
         [[32, 35], [34, 35], [34, 35.5], [32, 35.5]],
-
-        // ==================== 北美洲/北大西洋部分 ====================
-        // 11. 北美洲东岸
         [
             [-85, 25], [-81, 25], [-80, 32], [-75, 37], [-74, 41], [-70, 43], [-66, 45], 
             [-60, 47], [-55, 49], [-56, 52], [-60, 55], [-65, 60], [-70, 62], [-80, 62], [-85, 30]
         ],
-        // 12. 格陵兰岛南部
         [
             [-45, 60], [-42, 60], [-40, 63], [-35, 65], [-30, 68], [-22, 70], [-20, 65], [-30, 58], [-42, 59]
         ],
-        // 13. 冰岛
         [
             [-24, 65.5], [-22, 66], [-16, 66.5], [-13, 65], [-18, 63.5], [-22, 63.8]
         ],
-        // 14. 加勒比群岛、南美北部
         [
             [-75, 15], [-70, 12], [-62, 10], [-50, 0], [-50, 15], [-60, 18], [-70, 18]
         ],
-
-        // ==================== 其他岛屿 ====================
-        // 库页岛
         [[142.5,54],[143.5,52],[144,50],[143.5,48],[142.5,46],[142,47],[141.5,49],[141.5,51],[142,53]],
-        // 北海道
         [[140.5,45.5],[143,44.5],[145.5,43.5],[145,42.5],[142,41.8],[140.5,42.5],[140,44]],
-        // 本州+四国+九州
         [
             [141,45],[142,43],[141,41],[140,39],[139,37],[137,36.5],[135,35.5],[133,34.5],[131.5,34],
             [130.5,33.5],[129.5,33],[130.5,32],[131.5,32.5],[132.5,33.5],[134,34],[135.5,35],
             [137,35.5],[138.5,36.5],[140,38],[141,40],[141.5,42]
         ],
-        // 台湾岛
         [[121.5,25.5],[122.5,24],[121,22],[120,23],[120.5,25]],
-        // 吕宋岛
         [[120,18.5],[122,18],[122.5,16],[121.5,14],[120.5,13.5],[119.8,15],[120,17]],
-        // 棉兰老岛
         [[122,9],[124,9.5],[126,9],[126.5,7],[125.5,5.5],[123.5,5.5],[122,7]],
-        // 加里曼丹岛
         [[109,2],[110,4],[113,4.5],[117,6.5],[119,5.5],[118.5,3.5],[116,1.5],[113,1],[110,1]],
-        // 苏门答腊
         [[95,5.5],[98,4],[100.5,2],[102.5,0],[100,0]],
-        // 苏拉威西
         [[120,1],[122,0.5],[124,1],[125,1.5],[123,2],[121,1.5]],
-        // 北美洲西岸
         [
             [192,60],[195,58],[200,56],[205,55.5],[210,56.5],[215,58],[218,59.5],[222,60],
             [225,59],[228,57.5],[232,55.5],[235,53.5],[237,51.5],[238.5,49.5],[239.5,47.5],
@@ -511,11 +588,8 @@
             [263,17],[262,18],[260,19],[258,19.5],
             [282,20],[282,60]
         ],
-        // 下加利福尼亚
         [[247,32],[248.5,30],[250,28],[251.5,26],[252.5,24],[251.5,23],[250,25],[248.5,27],[247,29]],
-        // 阿拉斯加半岛
         [[205,57],[208,58],[210,59],[207,59.5],[204,58.5]],
-        // 中美洲地峡
         [
             [253, 22], [255, 21], [257, 20], [259, 19], [261, 18], [263, 17], [265, 16], [267, 15], [269, 14], [271, 13], [273, 12], [275, 11], [277, 10.5], [279, 10], [281, 9.5], [282, 9],
             [282, 7], [280, 7.5], [278, 7.5], [276, 8], [274, 8.5], [272, 9], [270, 10], [268, 11], [266, 12], [264, 13], [262, 14], [260, 15], [258, 15.5], [256, 16.5], [254, 18], [253, 20]
@@ -626,10 +700,13 @@
         return R * c;
     }
 
+    // 【核心修复】使用标准球面恒向线公式，杜绝屏幕拉伸导致的角度误差
     function bearingRhumbLine(lat1, lon1, lat2, lon2) {
-        const p1 = mercatorXY(lat1, lon1), p2 = mercatorXY(lat2, lon2);
-        const dx = p2.x - p1.x, dy = p2.y - p1.y;
-        return (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δλ = (lon2 - lon1) * Math.PI/180;
+        const Δψ = Math.log(Math.tan(Math.PI/4 + φ2/2) / Math.tan(Math.PI/4 + φ1/2));
+        return (Math.atan2(Δλ, Δψ) * 180 / Math.PI + 360) % 360;
     }
 
     function moveRhumbLine(lat, lon, course, dist) {
@@ -664,12 +741,7 @@
         const days = Math.floor(hours / 24);
         const h = Math.floor(hours % 24);
         const m = Math.round((hours * 60) % 60);
-        
-        let str = '';
-        if (days > 0) str += `${days}天 `;
-        if (h > 0 || days > 0) str += `${h}小时 `;
-        str += `${m}分钟`;
-        return str;
+        return `${days>0?days+'天 ':''}${h>0||days>0?h+'小时 ':''}${m}分钟`;
     }
 
     // ==================== 数据与状态 ====================
@@ -686,6 +758,9 @@
     let dragging = null;
     let suppressNextClick = false;
     let currentWpIndex = 1;
+    
+    // 航行参数
+    let curVL = 12, curCc = 90, curVc = 2;
 
     function getRoute() { return [startPoint, ...waypoints, endPoint]; }
 
@@ -710,8 +785,7 @@
     function updateWaypointTable() {
         const route = getRoute();
         let html = '';
-        let totalDist = 0;
-        let totalTime = 0;
+        let totalDist = 0, totalTime = 0;
 
         for (let i = 0; i < route.length; i++) {
             const p = route[i];
@@ -722,7 +796,6 @@
                 const dist = haversineDist(p.lat, p.lon, next.lat, next.lon);
                 courseStr = bearingRhumbLine(p.lat, p.lon, next.lat, next.lon).toFixed(1) + '°';
                 distStr   = dist.toFixed(1) + ' nm';
-                
                 totalDist += dist;
                 if (speed > 0) {
                     const timeH = dist / speed;
@@ -737,7 +810,7 @@
             const isEnd    = (i === route.length - 1);
             const isMiddle = !isStart && !isEnd;
 
-            const isCurrent = (i === currentWpIndex - 1 && running);
+            const isCurrent = (i === currentWpIndex - 1 && running && !isChartworkMode);
             let rowStyle = isCurrent ? 'style="background:#c8e6c9;"' : '';
 
             let rowClass = 'row-label';
@@ -778,6 +851,12 @@
         const wpIdx = parseInt(btn.dataset.wp, 10);
         if (isNaN(wpIdx) || wpIdx < 0 || wpIdx >= waypoints.length) return;
         waypoints.splice(wpIdx, 1);
+        
+        // 删除点后，关闭计算结果
+        weatherPreplanResults = null;
+        weatherTablePanel.style.display = 'none';
+        helmControl.style.display = 'none';
+        
         const route = getRoute();
         if (currentWpIndex >= route.length) currentWpIndex = route.length - 1;
         if (currentWpIndex < 1) currentWpIndex = 1;
@@ -819,6 +898,90 @@
         ctx.restore();
     }
 
+    // ==================== 风流预配计算与设置 ====================
+    btnCalcWeather.addEventListener('click', function() {
+        curVL = parseFloat(document.getElementById('calcVL').value) || 12;
+        curCc = parseFloat(document.getElementById('calcCurrentDir').value) || 0;
+        curVc = parseFloat(document.getElementById('calcCurrentSpd').value) || 0;
+
+        let route = getRoute();
+        if (route.length < 2) {
+            alert('请先画一条航线（至少包含起点和终点）。');
+            return;
+        }
+
+        let results = [];
+        let html = '';
+
+        for (let i = 0; i < route.length - 1; i++) {
+            let p1 = route[i];
+            let p2 = route[i + 1];
+            let CA = bearingRhumbLine(p1.lat, p1.lon, p2.lat, p2.lon);
+
+            let diff = (curCc - CA) * Math.PI / 180;
+            let sinBeta = - (curVc / curVL) * Math.sin(diff);
+
+            if (Math.abs(sinBeta) > 1) {
+                alert(`第 ${i+1} 段：流速过大（${curVc}kn），船速（${curVL}kn）不足以抵抗水流！\n请减小流速或增大船速。`);
+                return;
+            }
+
+            let beta = Math.asin(sinBeta) * 180 / Math.PI;
+            let TC = (CA + beta + 360) % 360;
+            let VG = curVL * Math.cos(beta * Math.PI / 180) + curVc * Math.cos(diff);
+
+            results.push({ p1, p2, CA, TC, beta, VG });
+
+            html += `<tr>
+                <td>${i+1}</td>
+                <td>${CA.toFixed(1)}°</td>
+                <td>${TC.toFixed(1)}°</td>
+                <td>${beta.toFixed(1)}°</td>
+                <td>${VG.toFixed(1)} kn</td>
+            </tr>`;
+        }
+
+        weatherPreplanResults = results;
+        weatherTableBody.innerHTML = html;
+        weatherTablePanel.style.display = 'block';
+
+        // 显示手操舵控件并赋予初始预配值
+        helmControl.style.display = 'flex';
+        currentTCInput.value = results[0].TC.toFixed(1);
+
+        // 重置船只位置，准备航行
+        stopShips();
+        ship.lat = startPoint.lat;
+        ship.lon = startPoint.lon;
+        ship.trail = [{lat: ship.lat, lon: ship.lon}];
+        ship.arrived = false;
+        currentWpIndex = 1;
+        hasStarted = true;
+        ship.course = results[0].TC; // 初始航向
+        
+        drawChart();
+    });
+
+    // 手动调节航向
+    window.adjustTC = function(dir) {
+        let val = parseFloat(currentTCInput.value) || 0;
+        val = (val + dir + 360) % 360;
+        currentTCInput.value = val.toFixed(1);
+        applyManualTC();
+    };
+
+    window.applyManualTC = function() {
+        if (!isChartworkMode) return;
+        let val = parseFloat(currentTCInput.value) || 0;
+        ship.course = (val + 360) % 360; // 立即改变船头
+        drawChart(); // 重新绘制
+    };
+
+    // 绑定输入框实时变化
+    currentTCInput.addEventListener('input', function() {
+        window.applyManualTC();
+    });
+
     // ==================== 绘制海图 ====================
     function drawChart() {
         ctx.clearRect(0, 0, W, H);
@@ -832,8 +995,19 @@
 
         // 1. 底图绘制
         if (useBaseMap) {
-            if (currentBgImg) {
-                ctx.drawImage(currentBgImg, leftMargin, top, mapW, mapH);
+            if (bgLoadedImg) {
+                ctx.drawImage(bgLoadedImg, leftMargin, top, mapW, mapH);
+            } else if (currentBgUrl) {
+                drawLand();
+                ctx.fillStyle = '#000'; ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('底图重载中...', W/2, H/2);
+                const tempImg = new Image();
+                tempImg.onload = function() {
+                    bgLoadedImg = tempImg;
+                    drawChart();
+                };
+                tempImg.src = currentBgUrl;
             } else {
                 drawLand();
                 ctx.fillStyle = '#000'; ctx.font = '14px Arial';
@@ -842,8 +1016,7 @@
             }
         } else {
             drawLand();
-            // 动态经纬网
-            let step = (lonMax - lonMin) > 90 ? 15 : 10;
+            let step = getGridStep(lonMax - lonMin);
             ctx.strokeStyle = 'rgba(90,140,180,0.55)';
             ctx.lineWidth = 1;
             for (let lon = Math.ceil(lonMin/step)*step; lon <= lonMax; lon += step) {
@@ -855,21 +1028,15 @@
                 ctx.beginPath(); ctx.moveTo(leftMargin, p.y); ctx.lineTo(leftMargin + mapW, p.y); ctx.stroke();
             }
             
-            // 北太平洋专属关键点
-            if (lonMin === 100 && latMin === 0) {
-                drawRefPoints();
-            }
-            // 上海（只要在范围内就画）
-            if (121.5 >= lonMin && 121.5 <= lonMax && 31.2 >= latMin && 31.2 <= latMax) {
-                drawShanghai();
-            }
+            if (lonMin === 100 && latMin === 0) drawRefPoints();
+            if (121.5 >= lonMin && 121.5 <= lonMax && 31.2 >= latMin && 31.2 <= latMax) drawShanghai();
         }
 
         // 2. 用户航线折线
         const route = getRoute();
         if (waypoints.length > 0) {
             ctx.beginPath();
-            ctx.strokeStyle = 'rgba(160,0,200,0.85)';
+            ctx.strokeStyle = 'rgba(160,0,200,0.85)'; // 紫色计划航线
             ctx.lineWidth = 2.5;
             route.forEach((pt, i) => {
                 const p = mercatorXY(pt.lat, pt.lon);
@@ -913,7 +1080,7 @@
         ctx.textBaseline = 'top';
         ctx.fillText('终点', ep.x, ep.y + 13);
 
-        // 5. 船舶轨迹与船舶
+        // 5. 船舶（含风流模式）
         if (hasStarted) {
             if (ship.trail.length > 1) {
                 ctx.strokeStyle = 'rgba(204,0,0,0.45)';
@@ -930,24 +1097,107 @@
             const p = mercatorXY(ship.lat, ship.lon);
             ctx.save();
             ctx.translate(p.x, p.y);
-            ctx.rotate(ship.course * Math.PI / 180);
+            
+            // 画真北线 (白色虚线，表示绝对正北)
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([2, 3]);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -40);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px Arial';
+            ctx.fillText('N', 0, -45);
+
+            // 画真航向线 (黑色实线，表示船头朝向)
+            if (isChartworkMode) {
+                ctx.rotate(ship.course * Math.PI / 180);
+                ctx.strokeStyle = '#111';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, -14); 
+                ctx.lineTo(0, -50);
+                ctx.stroke();
+                // 箭头
+                ctx.beginPath();
+                ctx.moveTo(0, -50);
+                ctx.lineTo(-4, -42);
+                ctx.lineTo(4, -42);
+                ctx.closePath();
+                ctx.fillStyle = '#111';
+                ctx.fill();
+                
+                ctx.rotate(-ship.course * Math.PI / 180); // 转回来画船
+            }
+
+            ctx.rotate(ship.course * Math.PI / 180); 
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
             ctx.shadowBlur = 10;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 5.5, 13, 0, 0, Math.PI * 2);
-            ctx.fillStyle = '#cc0000'; ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = '#222'; ctx.lineWidth = 1.2; ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(0, -15.5);
-            ctx.quadraticCurveTo(-5, -11, -4, -7);
-            ctx.lineTo(4, -7);
-            ctx.quadraticCurveTo(5, -11, 0, -15.5);
-            ctx.fillStyle = '#cc0000'; ctx.fill(); ctx.stroke();
+            
+            if (isChartworkMode) {
+                // 绿色船只 (风流预配)
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 5.5, 13, 0, 0, Math.PI * 2);
+                ctx.fillStyle = '#4caf50'; ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, -15.5);
+                ctx.quadraticCurveTo(-5, -11, -4, -7);
+                ctx.lineTo(4, -7);
+                ctx.quadraticCurveTo(5, -11, 0, -15.5);
+                ctx.fillStyle = '#4caf50'; ctx.fill(); ctx.stroke();
+            } else {
+                // 红色船只 (原版)
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 5.5, 13, 0, 0, Math.PI * 2);
+                ctx.fillStyle = '#cc0000'; ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#222'; ctx.lineWidth = 1.2; ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, -15.5);
+                ctx.quadraticCurveTo(-5, -11, -4, -7);
+                ctx.lineTo(4, -7);
+                ctx.quadraticCurveTo(5, -11, 0, -15.5);
+                ctx.fillStyle = '#cc0000'; ctx.fill(); ctx.stroke();
+            }
             ctx.restore();
         }
 
-        ctx.restore();
+              // ================= 自定义海图说明文字 =================
+        if (isChartworkMode) {
+            ctx.save();
+            
+            // 1. 写标题（加粗字体）
+            ctx.font = 'bold 16px "Microsoft YaHei", Arial, sans-serif';
+            ctx.fillStyle = 'rgba(200, 0, 0, 0.85)'; // 深红色
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('🚢海图作业使用说明：', leftMargin + 30, top + 30);
+
+            // 2. 写正文（普通字体）
+            ctx.font = '14px "Microsoft YaHei", Arial, sans-serif';
+            ctx.fillStyle = '#070707'; // 黒色
+             //ctx.fillStyle = '#333333'; // 深灰色
+            ctx.fillText('1. 起点、终点和分点可拖动。', leftMargin + 30, top + 60);
+            ctx.fillText('2. 在“风流预配栏”输入船速、流向流速。', leftMargin + 30, top + 85);
+            ctx.fillText('3. 点击“计算并绘算”按钮，', leftMargin + 30, top + 110);
+            ctx.fillText('  船舶出现在起点，可手操舵改变航向。', leftMargin + 35, top + 135);
+            ctx.fillText('4. 在起终点间随意点击，设置分点。', leftMargin + 30, top + 160);
+            ctx.fillText('5. 点击下面“启动”按钮，船舶开始航行。', leftMargin + 30, top + 185);
+            ctx.fillText('6. 点击 航线图/矢量图切换按钮，', leftMargin + 30, top + 210);           
+            ctx.fillText('可用空白海图进行各种海图作业练习。', leftMargin + 45, top + 235);   
+             ctx.fillText('7. 设置海图范围，可加载任意比例尺海图。', leftMargin + 30, top + 260);
+           
+            ctx.restore();
+        }
+        // ======================================================
+        
+        ctx.restore(); // 解除裁剪
 
         // 图框与刻度
         ctx.strokeStyle = '#222';
@@ -959,20 +1209,21 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
-        let step = (lonMax - lonMin) > 90 ? 15 : 10;
+        let step = getGridStep(lonMax - lonMin);
         for (let lon = Math.ceil(lonMin/step)*step; lon <= lonMax; lon += step) {
             const p = mercatorXY(latMin, lon);
             let label;
-            if (lon > 180) label = (360 - lon) + '°W';
-            else if (lon < 0) label = (-lon) + '°W';
-            else label = lon + '°E';
+            let displayVal = parseFloat(lon.toFixed(1));
+            if (lon > 180) label = (360 - displayVal) + '°W';
+            else if (lon < 0) label = (-displayVal) + '°W';
+            else label = displayVal + '°E';
             ctx.fillText(label, p.x, top + mapH + 5);
         }
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
         for (let lat = Math.ceil(latMin/step)*step; lat <= latMax; lat += step) {
             const p = mercatorXY(lat, lonMin);
-            ctx.fillText(lat + '°N', leftMargin - 8, p.y);
+            ctx.fillText(parseFloat(lat.toFixed(1)) + '°N', leftMargin - 8, p.y);
         }
 
         updateWaypointTable();
@@ -996,33 +1247,48 @@
         drawChart();
     });
 
-    // 加载本地底图函数（修复：找不到文件时不清空当前图片）
-    function loadBgImage(imgName) {
+    function loadBgImage(url) {
+        if (!url) {
+            currentBgUrl = '';
+            bgLoadedImg = null;
+            useBaseMap = false;
+            btnToggleMap.classList.remove('active');
+            btnToggleMap.textContent = '🖼️ 航线图';
+            drawChart();
+            return;
+        }
+
+        currentBgUrl = url; 
+        if (!useBaseMap) {
+            bgLoadedImg = null; 
+            drawChart();
+            return;
+        }
+
         const img = new Image();
-        img.src = imgName;
+        img.src = url;
         img.onload = function() {
-            currentBgImg = img; // 成功则替换
-            useBaseMap = true;
-            btnToggleMap.classList.add('active');
-            btnToggleMap.textContent = '🖼️ 矢量底图';
+            bgLoadedImg = img;
             drawChart();
         };
         img.onerror = function() {
-            // 加载失败（没找到本地文件）
-            console.log('未找到本地预设图：' + imgName);
-            // 【修复重点】：绝对不要写 currentBgImg = null;
-            // 如果当前是矢量图，则保持矢量图；如果当前有上传的图，则保留它。
-            if (!currentBgImg) {
-                useBaseMap = false;
-                btnToggleMap.classList.remove('active');
-                btnToggleMap.textContent = '🖼️ 真实底图';
-            }
+            bgLoadedImg = null;
+            btnToggleMap.classList.remove('active');
+            btnToggleMap.textContent = '🖼️  航线图';
+            useBaseMap = false;
             drawChart();
         };
     }
 
-    // 预设按钮
     window.setPreset = function(type) {
+        useBaseMap = true;
+        btnToggleMap.classList.add('active');
+        btnToggleMap.textContent = '🖼️ 矢量底图';
+
+        weatherPreplanResults = null;
+        weatherTablePanel.style.display = 'none';
+        helmControl.style.display = 'none';
+
         if (type === 'pac') {
             boundLonMinInput.value = 100;
             boundLonMaxInput.value = 282;
@@ -1031,7 +1297,9 @@
             startPoint = { lat: 35.0, lon: 140.0 };
             endPoint   = { lat: 20.0, lon: 220.0 };
             waypoints = [];
-            loadBgImage('bg_pacific.png'); // 自动加载北太平洋底图
+            loadBgImage('bg_pacific.png'); 
+            isChartworkMode = false;
+            weatherPrepanel.style.display = 'none';
         } else if (type === 'eurasia') {
             boundLonMinInput.value = -20;
             boundLonMaxInput.value = 150;
@@ -1040,7 +1308,9 @@
             startPoint = { lat: 31.2, lon: 121.5 };
             endPoint   = { lat: 51.9, lon: 4.5 };
             waypoints = [];
-            loadBgImage('bg_eurasia.png'); // 自动加载欧亚底图
+            loadBgImage('bg_eurasia.png'); 
+            isChartworkMode = false;
+            weatherPrepanel.style.display = 'none';
         } else if (type === 'atlantic') {
             boundLonMinInput.value = -70;
             boundLonMaxInput.value = 10;
@@ -1049,12 +1319,31 @@
             startPoint = { lat: 52.7, lon: -10.8 };
             endPoint   = { lat: 44.0, lon: -55.2 };
             waypoints = [];
-            loadBgImage('bg_atlantic.png'); // 自动加载北大西洋底图
+            loadBgImage('bg_atlantic.png'); 
+            isChartworkMode = false;
+            weatherPrepanel.style.display = 'none';
+        } else if (type === 'chartwork') {
+            boundLonMinInput.value = 122.3;
+            boundLonMaxInput.value = 122.9;
+            boundLatMinInput.value = 30.1;
+            boundLatMaxInput.value = 30.4;
+            startPoint = { lat: 30.37, lon: 122.603 };
+            endPoint   = { lat: 30.12, lon: 122.575 };
+            waypoints = [];
+            loadBgImage('bg_chartwork.png'); 
+            
+            isChartworkMode = true;
+            weatherPrepanel.style.display = 'flex';
+            
+            hasStarted = true;
+            ship.lat = startPoint.lat;
+            ship.lon = startPoint.lon;
+            ship.course = 0;
         }
         
         syncInputs();
         resetToStart();
-        btnUpdateBounds.click(); // 应用范围并重绘
+        btnUpdateBounds.click(); 
     };
 
     // ==================== 模拟步进 ====================
@@ -1064,6 +1353,63 @@
         if (route.length < 2) { stopShips(); return; }
         if (currentWpIndex >= route.length) { stopShips(); return; }
 
+        // 如果是海图作业
+        if (isChartworkMode) {
+            let VL = curVL;
+            let Vc = curVc;
+            let Cc = curCc;
+            let TC = ship.course; // 当前船头朝向（可被手动调整）
+
+            // 真实物理矢量合成：船速 + 流速
+            let rad_TC = TC * Math.PI / 180;
+            let rad_Cc = Cc * Math.PI / 180;
+            
+            let vx = VL * Math.sin(rad_TC) + Vc * Math.sin(rad_Cc);
+            let vy = VL * Math.cos(rad_TC) + Vc * Math.cos(rad_Cc);
+
+            let VG = Math.sqrt(vx * vx + vy * vy);
+            let CA_actual = Math.atan2(vx, vy) * 180 / Math.PI;
+            CA_actual = (CA_actual + 360) % 360;
+
+            // 适度放大时间步长，让视觉更明显
+            const stepHours = 0.08; 
+            const dist = VG * stepHours; 
+
+            const target = route[currentWpIndex];
+            const distToTarget = haversineDist(ship.lat, ship.lon, target.lat, target.lon);
+
+            // 只要这一步跨过了目标点，就判定为到达
+            if (distToTarget <= dist) {
+                // 吸附到分点，确保进入下一段时的轨迹绝对准确
+                ship.lat = target.lat;
+                ship.lon = target.lon;
+                currentWpIndex++;
+                
+                if (currentWpIndex >= route.length) {
+                    ship.arrived = true;
+                    ship.trail.push({lat: ship.lat, lon: ship.lon});
+                    stopShips();
+                    drawChart();
+                    return;
+                }
+                
+                // 到达下一点时，立刻自动切换到下一段的预配真航向
+                if (weatherPreplanResults && weatherPreplanResults[currentWpIndex - 1]) {
+                    ship.course = weatherPreplanResults[currentWpIndex - 1].TC;
+                    currentTCInput.value = ship.course.toFixed(1); // 保证输入框同步
+                }
+            } else {
+                // 按照实际合成的 CA 和 VG 平滑移动
+                const newPos = moveRhumbLine(ship.lat, ship.lon, CA_actual, dist);
+                ship.lat = newPos.lat;
+                ship.lon = newPos.lon;
+            }
+            ship.trail.push({lat: ship.lat, lon: ship.lon});
+            drawChart();
+            return;
+        }
+
+        // 普通模式移动
         const target = route[currentWpIndex];
         const distToTarget = haversineDist(ship.lat, ship.lon, target.lat, target.lon);
         const stepHours = 0.05;
@@ -1098,12 +1444,21 @@
         const route = getRoute();
         if (running || route.length < 2) return;
 
+        if (isChartworkMode && !weatherPreplanResults) {
+            alert('请先在蓝色面板中点击“计算并绘制”，然后才能启动。');
+            return;
+        }
+
         if (ship.arrived || currentWpIndex >= route.length) {
             ship.lat = startPoint.lat;
             ship.lon = startPoint.lon;
             ship.trail = [{lat: ship.lat, lon: ship.lon}];
             ship.arrived = false;
             currentWpIndex = 1;
+            if (isChartworkMode && weatherPreplanResults) {
+                ship.course = weatherPreplanResults[0].TC;
+                currentTCInput.value = ship.course.toFixed(1);
+            }
         }
 
         hasStarted = true;
@@ -1123,13 +1478,20 @@
 
     function resetToStart() {
         stopShips();
+        
         ship.lat = startPoint.lat;
         ship.lon = startPoint.lon;
         ship.course = 0;
         ship.trail = [{lat: ship.lat, lon: ship.lon}];
         ship.arrived = false;
         currentWpIndex = 1;
-        hasStarted = false;
+        hasStarted = isChartworkMode; // 海图作业模式下，船一直显示
+        
+        if (isChartworkMode && weatherPreplanResults) {
+            ship.course = weatherPreplanResults[0].TC;
+            currentTCInput.value = ship.course.toFixed(1);
+        }
+        
         drawChart();
     }
 
@@ -1139,7 +1501,12 @@
         ship.trail = [];
         ship.arrived = false;
         currentWpIndex = 1;
-        hasStarted = false;
+        hasStarted = isChartworkMode;
+        
+        weatherPreplanResults = null;
+        weatherTablePanel.style.display = 'none';
+        helmControl.style.display = 'none';
+
         drawChart();
     }
 
@@ -1197,6 +1564,11 @@
             waypoints[dragging.index].lat = geo.lat;
             waypoints[dragging.index].lon = geo.lon;
         }
+        
+        // 拖动时清空计算结果
+        weatherPreplanResults = null;
+        weatherTablePanel.style.display = 'none';
+        helmControl.style.display = 'none';
 
         syncInputs();
         if (dragging.type === 'wp') syncShipToStart();
@@ -1223,6 +1595,11 @@
 
         const geo = inverseMercator(pos.x, pos.y);
         waypoints.push({ lat: geo.lat, lon: geo.lon });
+        
+        // 添加点时清空结果
+        weatherPreplanResults = null;
+        weatherTablePanel.style.display = 'none';
+        helmControl.style.display = 'none';
 
         if (!running) {
             ship.arrived = false;
@@ -1233,7 +1610,7 @@
 
     canvas.addEventListener('contextmenu', function(e) {
         e.preventDefault();
-        if (isAddMode) return;
+        if (isAddMode || isChartworkMode) return;
         const pos = getMousePos(e);
         const geo = inverseMercator(pos.x, pos.y);
 
@@ -1269,6 +1646,10 @@
             const isStart = this.id.startsWith('start');
             const target = isStart ? startPoint : endPoint;
             target[key] = v;
+            
+            weatherPreplanResults = null;
+            weatherTablePanel.style.display = 'none';
+            helmControl.style.display = 'none';
 
             if (isStart) syncShipToStart();
             drawChart();
@@ -1288,40 +1669,34 @@
         
         const reader = new FileReader();
         reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                currentBgImg = img; // 覆盖当前底图
-                useBaseMap = true;
-                btnToggleMap.classList.add('active');
-                btnToggleMap.textContent = '🖼️ 矢量底图';
-                drawChart();
-            };
-            img.src = event.target.result;
+            loadBgImage(event.target.result); 
+            useBaseMap = true;
+            btnToggleMap.classList.add('active');
+            btnToggleMap.textContent = '🖼️ 航线图';
+            bgUpload.value = ''; 
         };
         reader.readAsDataURL(file);
     });
 
     btnToggleMap.addEventListener('click', function() {
-        if (useBaseMap) {
-            useBaseMap = false;
-            this.classList.remove('active');
-            this.textContent = '🖼️ 真实底图';
+        useBaseMap = !useBaseMap;
+        this.classList.toggle('active', useBaseMap);
+        this.textContent = useBaseMap ? '🖼️ 矢量底图' : '🖼️ 航线图';
+        
+        if (useBaseMap && !bgLoadedImg && currentBgUrl) {
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                bgLoadedImg = tempImg;
+                drawChart();
+            };
+            tempImg.src = currentBgUrl;
         } else {
-            if (currentBgImg) {
-                useBaseMap = true;
-                this.classList.add('active');
-                this.textContent = '🖼️ 矢量底图';
-            } else {
-                alert('当前未加载底图，请点击“上传底图”或选择预设区域。');
-                return;
-            }
+            drawChart();
         }
-        drawChart();
     });
 
     // ==================== 进阶工具功能 ====================
     
-    // 1. 保存路线
     btnSave.addEventListener('click', function() {
         const data = {
             start: startPoint,
@@ -1338,7 +1713,6 @@
         }
     });
 
-    // 2. 读取路线
     btnLoad.addEventListener('click', function() {
         const raw = localStorage.getItem('north_pacific_route_data');
         if (!raw) {
@@ -1364,6 +1738,10 @@
             speedInput.value = speed;
             ship.speed = speed;
             
+            weatherPreplanResults = null;
+            weatherTablePanel.style.display = 'none';
+            helmControl.style.display = 'none';
+
             syncInputs();
             resetToStart();
             alert('✅ 航线读取成功！');
@@ -1372,7 +1750,6 @@
         }
     });
 
-    // 3. 导出图片
     btnExport.addEventListener('click', function() {
         const originalText = this.textContent;
         this.textContent = '⏳ 正在生成...';
@@ -1409,7 +1786,6 @@
         }, 100);
     });
 
-    // ==================== 其他按钮事件 ====================
     btnAddWp.addEventListener('click', function() {
         isAddMode = !isAddMode;
         btnAddWp.classList.toggle('active', isAddMode);
