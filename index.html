@@ -4,8 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>航海小程序</title>
-    <style>
-       body {
+   
+<link rel="preload" as="image" href="background.jpg">
+
+ <style>
+    
+@media (max-width: 768px) {
+    .footer {
+        font-size: 12px;
+        padding: 0 10px;
+    }
+}
+ 
+     body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -102,10 +113,25 @@
             box-shadow: 0 8px 15px rgba(0,0,0,0.2);
         }
 
-        .footer {
+      
+       .footer {
             margin-top: 50px;
-            color: #868686;
+            color: #888888;
             font-size: 14px;
+       text-align: center;           /*文字水平居中 */
+       padding: 0 20px;                /* 左右留边距，防止贴边 */
+       max-width: 800px;             /* 限制最大宽度 */
+       margin-left: auto;            /* 自动左边距 */
+       margin-right: auto;           /* 自动右边距 */
+
+       }
+ .info {
+            color:   #888888;	
+            margin-top: 15px;
+            font-size: 14px;
+
+    
+       
         }
     </style>
 </head>
@@ -119,7 +145,10 @@
         <a href="chart.html" class="btn btn-primary">
             🌊 恒向线与大圆航线
         </a>
-
+      <a href="route.html" class="btn btn-route">
+            🗺️ 航线设计
+        </a>
+        
         <a href="star_simulator.html" class="btn btn-success">
             ⭐ 索星卡模拟器
         </a>
@@ -129,14 +158,16 @@
         </a>
 
         <!-- 修复了中文引号，并将 class 名字改为规范的 btn-route，图标换成了更像航线的图标 -->
-        <a href="route.html" class="btn btn-route">
-            🗺️ 航线设计
-        </a>
 
-    </div>
-
+<div class="info" style="text-align: center; padding: 0 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
+    https://wu-nv.github.io/CAPT_WU-NAV/
+    <br>
+    温馨提示：复制以上网址在电脑上操作效果更好
+</div>
+    
+      
     <div class="footer">
-        &copy; 2026 CAPT_WU. All Rights Reserved.
+   &copy; 2026 CAPT_WU. All Rights Reserved.
     </div>
 
 </body>
